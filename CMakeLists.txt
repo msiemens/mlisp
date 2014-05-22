@@ -31,7 +31,8 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/gen/grammar.c
 # Configure executables and libraries
 #################################################################################
 add_library(mpc ${PROJECT_SOURCE_DIR}/lib/mpc/mpc.c)
-add_executable(mlisp ${PROJECT_SOURCE_DIR}/src/eval.c ${PROJECT_SOURCE_DIR}/gen/grammar.c ${PROJECT_SOURCE_DIR}/src/main.c)
+add_executable(mlisp ${PROJECT_SOURCE_DIR}/src/eval.c ${PROJECT_SOURCE_DIR}/src/lval.c
+                     ${PROJECT_SOURCE_DIR}/gen/grammar.c ${PROJECT_SOURCE_DIR}/src/main.c)
 target_link_libraries(mlisp mpc)
 
 set_target_properties(mlisp

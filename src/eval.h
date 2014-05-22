@@ -1,9 +1,21 @@
 #include "mpc.h"
 
 #include "config.h"
+#include "lval.h"
 
-#define isint(f) (f - (int) f == 0)
+/*!
+ * Evaluate an AST
+ *
+ * @param   tree    The AST to evaluate
+ */
+lval eval(mpc_ast_t* t);
 
-PRECISION eval(mpc_ast_t* t);
-
-PRECISION eval_op(char* op, PRECISION x, PRECISION y);
+/*!
+ * Evaluate a maths operation
+ *
+ * @param   op  the operator to evaluate
+ * @param   x   the fist operand
+ * @param   y   the second operand
+ * @return      the result of the operation
+ */
+lval eval_op(char* op, lval x, lval y);

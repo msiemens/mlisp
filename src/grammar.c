@@ -21,5 +21,4 @@ mpc_parser_t* parser_get() {
 
 void parser_cleanup() {
     mpc_cleanup(4, Number, Operator, Expr, Lispy);
-    // New comment
 }

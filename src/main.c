@@ -1,8 +1,7 @@
-#include <math.h>
-
 #include "config.h"
 #include "eval.h"
 #include "grammar.h"
+#include "lval.h"
 
 #ifdef _WIN32
 
@@ -56,8 +55,8 @@ int main(void) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             // On success evaluate the AST, print the result and delete the AST
-            double result = eval(r.output);
-            printf("%f\n", result);
+            lval result = eval(r.output);
+            lval_println(result);
             mpc_ast_delete(r.output);
         } else {
             // Otherwise print and delete the Error
