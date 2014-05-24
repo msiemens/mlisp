@@ -1,5 +1,4 @@
 #pragma once
 
-#define PRECISION float
-
-#define PRECISION_INT long
+typedef float PRECISION;
+typedef long PRECISION_INT;

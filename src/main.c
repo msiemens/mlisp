@@ -32,17 +32,16 @@ void add_history(char* unused) {}
 #endif
 
 int main(void) {
-
     // Get parser
     mpc_parser_t* Lispy    = parser_get();
 
     // Welcome message
-    puts("Lispy Version 0.0.0.0.2");
+    puts("MLisp Version 0.0.0.0.2");
     puts("Enter 'quit' to exit\n");
 
     while (1) {
 
-        char* input = readline("lispy> ");
+        char* input = readline(">>> ");
         add_history(input);
 
         if (strstr(input, "exit") || strstr(input, "quit")) {
@@ -55,8 +54,9 @@ int main(void) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             // On success evaluate the AST, print the result and delete the AST
-            lval result = eval(r.output);
+            lval* result = eval(lval_read(r.output));
             lval_println(result);
+            lval_del(result);
             mpc_ast_delete(r.output);
         } else {
             // Otherwise print and delete the Error

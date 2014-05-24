@@ -1,76 +1,100 @@
 #include <stdbool.h>
+#include <math.h>
 
 #include "eval.h"
 
-static inline bool is_int(float f) { return (f - (int) f == 0); }
+//static inline bool is_int(float f) { return (f - (int) f == 0); }
 
-lval eval(mpc_ast_t* tree) {
+lval* eval_sexpr(lval* node) {
+    // Evaluate children
+    for (int i = 0; i < node->count; i++) {
+        node->values[i] = eval(node->values[i]);
 
-    // If tagged as number return it directly, otherwise expression.
-    if (strstr(tree->tag, "number")) {
-        // Verify it's a number
-        PRECISION val = strtod(tree->contents, NULL);
-
-        if (errno != ERANGE) {
-            return lval_num(val);
-        } else {
-            return lval_err(LERR_BAD_NUM);
+        // Error checking
+        if (node->values[i]->type == LVAL_ERR) {
+            return lval_take(node, i);
         }
     }
 
-    // The operator is always second child.
-    char* op = tree->children[1]->contents;
+    // Empty expression
+    if (node->count == 0) { return node; }
 
-    // We store the third child in `x`
-    lval x = eval(tree->children[2]);
+    // Single expression
+    else if (node->count == 1) { return lval_take(node, 0); }
 
-    // Iterate the remaining children
-    int i = 3;
-
-    if (strstr(tree->children[i]->tag, "expr") == 0) {
-        // If the current expr is consumed, the next tag is "expr" again
-        return eval_op(op, x, lval_num(0));
+    // Ensure first element is a symbol
+    lval* op = lval_pop(node, 0);
+    if (op->type != LVAL_SYM) {
+        lval_del(op); lval_del(node);
+        return lval_err("S-Expression doesn't start with a symbol!");
     }
 
-    while (strstr(tree->children[i]->tag, "expr")) {
-        // While current expr is not consumed
-        lval y = eval(tree->children[i]); // Evaluate next child
-        x = eval_op(op, x, y);  // Calculate the result and use it as x
-        i++;
-    }
+    // Call builtin with operator
+    lval* result = eval_builtin_op(node, op->sym[0]);
+    lval_del(op);
 
-    return x;
+    return result;
 }
 
-lval eval_op(char* op, lval x, lval y) {
-    // If either value is an error, return it
-    if (x.type == LVAL_ERR) { return x; }
-    if (y.type == LVAL_ERR) { return y; }
+lval* eval(lval* node) {
+    // Evaluate S-Expressions
+    if (node->type == LVAL_SEXPR) {
+        return eval_sexpr(node);
+    }
 
-    // Do math
-    if (strcmp(op, "+") == 0) { return lval_num(x.num + y.num); }
-    if (strcmp(op, "-") == 0) { return lval_num((y.num == 0) ? -x.num : x.num - y.num); }
-    if (strcmp(op, "*") == 0) { return lval_num(x.num * y.num); }
-    if (strcmp(op, "/") == 0) {
-        if (y.num == 0) {
-            return lval_err(LERR_DIV_ZERO);
-        } else {
-            return lval_num(x.num / y.num);
+    return node;
+}
+
+lval* eval_builtin_op(lval* node, char op) {
+    // Ensure all arguments are numbers
+    for (int i = 0; i < node->count; i++) {
+        if (node->values[i]->type != LVAL_NUM) {
+            lval_del(node);
+            return lval_err("Cannot operate on non number!");
         }
     }
-    if (strcmp(op, "^") == 0) { return lval_num(pow(x.num, y.num)); }
-    if (strcmp(op, "min") == 0) { return lval_num((x.num < y.num) ? x.num : y.num); }
-    if (strcmp(op, "max") == 0) { return lval_num((x.num > y.num) ? x.num : y.num); }
-    if (strcmp(op, "%") == 0) {
-        if (y.num == 0) {
-            return lval_err(LERR_DIV_ZERO);
+
+    lval* x = lval_pop(node, 0);
+
+    // If no arguments and op == '-', do unary negation
+    if ((op == '-') && node->count == 0) {
+        x->num *= -1;
+    }
+
+    while (node->count > 0) {
+        lval* y = lval_pop(node, 0);
+
+        switch (op) {
+            case '+': x->num += y->num; break;
+            case '-': x->num -= y->num; break;
+            case '*': x->num *= y->num; break;
+            case '/':  // Fall through
+            case '%':
+                if (y->num == 0) {
+                    lval_del(x); lval_del(y);
+                    x = lval_err("Division by zero!");
+                    goto exit_loop;  // Stop looping
+                }
+
+                switch (op) {
+                    case '%': x->num = fmodf(x->num, y->num); break;
+                    case '/': x->num /= y->num; break;
+                }
+
+                break;
+            default:
+                lval_del(x); lval_del(y);
+                x = lval_err("Operator not implemented!");
+                goto exit_loop;  // Stop looping
         }
 
-        if (is_int(x.num) && is_int(y.num)) {
-            return lval_num((PRECISION_INT) x.num % (PRECISION_INT) y.num);
-        } else {
-            return lval_err(LERR_NOT_INT);
-        }
+        // y not used any more
+        lval_del(y);
     }
-    return lval_err(LERR_BAD_OP);
+
+    exit_loop: ;
+
+    lval_del(node);
+
+    return x;
 }

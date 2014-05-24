@@ -1,5 +1,5 @@
-# Prefix notation
-number   : /-?[0-9]+(\.[0-9]+)?/ ;
-operator : '+' | '-' | '*' | '/' | '%' | '^' | "min" | "max" ;
-expr     : <number> | '(' <operator> <expr>+ ')' ;
-lispy    : /^/ <operator> <expr>+ /$/ ;
+number : /(-?[0-9]+(\.[0-9]+)?)/ ;
+symbol : '+' | '-' | '*' | '/' | '%' ;
+sexpr  : '(' <expr>* ')' ;
+expr   : <number> | <symbol> | <sexpr> ;
+lispy  : /^/ <expr>* /$/ ;

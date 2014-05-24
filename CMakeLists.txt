@@ -1,14 +1,16 @@
 project(mlisp)
 
 set(WARN_FLAGS "-pedantic-errors -Wextra -Wall")
-set(WARN_FLAGS "${WARN_FLAGS} -Wold-style-cast -Wuninitialized -Wmissing-declarations -Winit-self")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99")  # DEBUG FLAG IS SET!
+set(WARN_FLAGS "${WARN_FLAGS} -Wuninitialized -Wmissing-declarations -Winit-self")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c11")  # DEBUG FLAG IS SET!
 cmake_minimum_required(VERSION 2.6)
 
 # Setting the compiler
 #################################################################################
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
+#set(CMAKE_C_COMPILER "gcc")
+#set(CMAKE_CXX_COMPILER "g++")
 
 # Add sources
 #################################################################################
