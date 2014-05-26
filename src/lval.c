@@ -3,6 +3,33 @@
 #include "config.h"
 #include "lval.h"
 
+lval* lval_sexpr(void) {
+    lval* node = NEW_LVAL;
+    node->type = LVAL_SEXPR;
+    node->count = 0;
+    node->values = NULL;
+
+    return node;
+}
+
+lval* lval_qexpr(void) {
+    lval* node = NEW_LVAL;
+    node->type = LVAL_QEXPR;
+    node->count = 0;
+    node->values = NULL;
+
+    return node;
+}
+
+lval* lval_sym(char* symbol) {
+    lval* node = NEW_LVAL;
+    node->type = LVAL_SYM;
+    node->sym = malloc(strlen(symbol) + 1);
+    strcpy(node->sym, symbol);
+
+    return node;
+}
+
 lval* lval_num(PRECISION value) {
     lval* node = NEW_LVAL;
     node->type = LVAL_NUM;
@@ -20,22 +47,63 @@ lval* lval_err(char* message) {
     return node;
 }
 
-lval* lval_sym(char* symbol) {
+lval* lval_func(lbuiltin func) {
     lval* node = NEW_LVAL;
-    node->type = LVAL_SYM;
-    node->sym = malloc(strlen(symbol) + 1);
-    strcpy(node->sym, symbol);
+    node->type = LVAL_FUNC;
+    node->func = func;
 
     return node;
 }
 
-lval* lval_sexpr(void) {
-    lval* node = NEW_LVAL;
-    node->type = LVAL_SEXPR;
-    node->count = 0;
-    node->values = NULL;
+void lval_del(lval* node) {
+    switch(node->type) {
+        case LVAL_NUM: break;
+        case LVAL_FUNC: break;
 
-    return node;
+        // Types with strings
+        case LVAL_ERR: free(node->err); break;
+        case LVAL_SYM: free(node->sym); break;
+
+        // Sexpr: Delete all elements inside
+        case LVAL_SEXPR:
+        case LVAL_QEXPR:
+            for (int i = 0; i < node->count; i++) {
+                lval_del(node->values[i]);
+            }
+
+            // Free memory allocated to contain the pointers
+            free(node->values);
+            break;
+    }
+
+    free(node);
+}
+
+lval* lval_copy(lval* node) {
+    lval* copy = NEW_LVAL;
+    copy->type = node->type;
+
+    switch (node->type) {
+        // Copy functions and numbers directly
+        case LVAL_NUM:  copy->num  = node->num;  break;
+        case LVAL_FUNC: copy->func = node->func; break;
+
+        // Copy strings using malloc and strcpy
+        case LVAL_ERR: copy->err = STRCPY(node->err, copy->err); break;
+        case LVAL_SYM: copy->err = STRCPY(node->sym, copy->sym); break;
+
+        // Copy lists by copying each subexpression
+        case LVAL_SEXPR:
+        case LVAL_QEXPR:
+            copy->count  = node->count;
+            copy->values = malloc(LVAL_PTR_SIZE * node->count);
+            for (int i = 0; i < node->count; i++) {
+                copy->values[i] = lval_copy(node->values[i]);
+            }
+            break;
+    }
+
+    return copy;
 }
 
 lval* lval_add(lval* container, lval* value) {
@@ -45,6 +113,16 @@ lval* lval_add(lval* container, lval* value) {
     container->values[container->count - 1] = value;
 
     return container;
+}
+
+lval* lval_join(lval* first, lval* second) {
+    // For each value in 'second', add it to 'first'
+    while (second->count) {
+        first = lval_add(first, lval_pop(second, 0));
+    }
+
+    lval_del(second);
+    return first;
 }
 
 lval* lval_pop(lval* node, int index) {
@@ -82,10 +160,11 @@ lval* lval_read(mpc_ast_t* tree) {
     if      (strstr(tree->tag, "number")) { return lval_read_num(tree); }
     else if (strstr(tree->tag, "symbol")) { return lval_sym(tree->contents); }
 
-    // If root (">") or sexpr, create empty list
     lval* expr = NULL;
-    if      (strcmp("t->tag", ">") == 0) { expr = lval_sexpr(); }
-    else if (strcmp("t->tag", "sexpr"))  { expr = lval_sexpr(); }
+    // If root (">") or sexpr or qexpr, create empty list
+    if (strcmp(tree->tag, ">") == 0)     { expr = lval_sexpr(); }
+    else if (strstr(tree->tag, "sexpr")) { expr = lval_sexpr(); }
+    else if (strstr(tree->tag, "qexpr")) { expr = lval_qexpr(); }
 
     // Fill this list with any valid expression contained within
     for (int i = 0; i < tree->children_num; i++) {
@@ -99,27 +178,6 @@ lval* lval_read(mpc_ast_t* tree) {
     }
 
     return expr;
-}
-
-void lval_del(lval* node) {
-    switch(node->type) {
-        case LVAL_NUM: break;
-
-        // Types with strings
-        case LVAL_ERR: free(node->err); break;
-        case LVAL_SYM: free(node->sym); break;
-
-        // Sexpr: Delete all elements inside
-        case LVAL_SEXPR:
-            for (int i = 0; i < node->count; i++) {
-                lval_del(node->values[i]);
-            }
-
-            // Free memory allocated to contain the pointers
-            free(node->values);
-    }
-
-    free(node);
 }
 
 void lval_expr_print(lval* node, char open, char close) {
@@ -139,10 +197,12 @@ void lval_expr_print(lval* node, char open, char close) {
 
 void lval_print(lval* node) {
     switch (node->type) {
-        case LVAL_NUM:   printf("%.16f", node->num); break;
-        case LVAL_ERR:   printf("Error: %s", node->err); break;
-        case LVAL_SYM:   printf("%s", node->sym); break;
         case LVAL_SEXPR: lval_expr_print(node, '(', ')'); break;
+        case LVAL_QEXPR: lval_expr_print(node, '{', '}'); break;
+        case LVAL_SYM:   printf("%s", node->sym); break;
+        case LVAL_NUM:   printf("%g", node->num); break;
+        case LVAL_ERR:   printf("Error: %s", node->err); break;
+        case LVAL_FUNC:  printf("<function>"); break;
         default:         printf("!!! THIS SHOULD NEVER HAPPEN (INVALID TYPE) !!!");
     }
 }

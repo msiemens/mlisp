@@ -18,7 +18,7 @@ with open(GRAMMAR_SOURCE) as f:
 with open(GRAMMAR_DEFINITION) as f:
     grammar = f.read()
     grammar = re.sub('#.*', '', grammar).strip()
-    grammar = grammar.replace('\\', '\\\\\\')  # Escape backslashes
+    grammar = grammar.replace('\\', '\\\\\\\\')  # Escape backslashes
     grammar = grammar.replace('"', '\\"')  # Escape quotes
     # Add backslash at end of every line except the last
     grammar = '\n'.join('{}\\'.format(l) for l in grammar.splitlines())

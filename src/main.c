@@ -1,7 +1,9 @@
 #include "config.h"
-#include "eval.h"
 #include "grammar.h"
 #include "lval.h"
+#include "lenv.h"
+#include "eval.h"
+#include "builtin.h"
 
 #ifdef _WIN32
 
@@ -39,6 +41,9 @@ int main(void) {
     puts("MLisp Version 0.0.0.0.2");
     puts("Enter 'quit' to exit\n");
 
+    lenv* env = lenv_new();
+    builtins_init(env);
+
     while (1) {
 
         char* input = readline(">>> ");
@@ -54,7 +59,7 @@ int main(void) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             // On success evaluate the AST, print the result and delete the AST
-            lval* result = eval(lval_read(r.output));
+            lval* result = eval(env, lval_read(r.output));
             lval_println(result);
             lval_del(result);
             mpc_ast_delete(r.output);
@@ -66,6 +71,8 @@ int main(void) {
 
         free(input);
   }
+
+  lenv_del(env);
 
   // Undefine and delete our parsers
   parser_cleanup();

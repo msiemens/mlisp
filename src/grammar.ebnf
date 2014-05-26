@@ -1,5 +1,6 @@
 number : /(-?[0-9]+(\.[0-9]+)?)/ ;
-symbol : '+' | '-' | '*' | '/' | '%' ;
+symbol : /[a-zA-Z0-9_+\-*\/\\=<>!&]+/ ;
 sexpr  : '(' <expr>* ')' ;
-expr   : <number> | <symbol> | <sexpr> ;
+qexpr  : '{' <expr>* '}' ;
+expr   : <number> | <symbol> | <sexpr> | <qexpr> ;
 lispy  : /^/ <expr>* /$/ ;
