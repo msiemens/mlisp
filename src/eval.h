@@ -9,4 +9,6 @@
 
 lval* eval_sexpr(lenv* env, lval* node);
 
+lval* eval_func(lenv* env, lval* func, lval* args);
+
 lval* eval(lenv* env, lval* node);

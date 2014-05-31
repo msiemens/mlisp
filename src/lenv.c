@@ -1,7 +1,8 @@
 #include "lenv.h"
 
 lenv* lenv_new(void) {
-    lenv* env = NEW_LENV;
+    lenv* env = NEW_LENV();
+    env->parent = NULL;
     env->count = 0;
     env->symbols = NULL;
     env->values = NULL;
@@ -11,13 +12,28 @@ lenv* lenv_new(void) {
 
 void lenv_del(lenv* env) {
     for (int i = 0; i < env->count; i++) {
-        free(env->symbols[i]);
+        FREE(env->symbols[i]);
         lval_del(env->values[i]);
     }
 
-    free(env->symbols);
-    free(env->values);
-    free(env);
+    if (env->symbols) { FREE(env->symbols); }
+    if (env->values)  { FREE(env->values);  }
+    FREE(env);
+}
+
+lenv* lenv_copy(lenv* env) {
+    lenv* copy = NEW_LENV();
+    copy->parent  = env->parent;
+    copy->count   = env->count;
+    copy->symbols = xmalloc(CHAR_PTR_SIZE * copy->count);
+    copy->values  = xmalloc(LVAL_PTR_SIZE * copy->count);
+
+    for (int i = 0; i < env->count; i++) {
+        copy->symbols[i] = MSTRCPY(env->symbols[i], copy->symbols[i]);
+        copy->values[i]  = lval_copy(env->values[i]);
+    }
+
+    return copy;
 }
 
 lval* lenv_get(lenv* env, lval* key) {
@@ -29,7 +45,11 @@ lval* lenv_get(lenv* env, lval* key) {
         }
     }
 
-    return lval_err("Unbound symbol!");
+    if (env->parent) {
+        return lenv_get(env->parent, key);
+    } else {
+        return lval_err("Unbound symbol: '%s'", key->sym);
+    }
 }
 
 void lenv_put(lenv* env, lval* key, lval* value) {
@@ -40,16 +60,35 @@ void lenv_put(lenv* env, lval* key, lval* value) {
         if (strcmp(env->symbols[i], key->sym) == 0) {
             lval_del(env->values[i]);
             env->values[i] = lval_copy(value);
-            env->symbols[i] = RSTRCPY(key->sym, env->symbols[i]);
+            return;
         }
     }
 
     // Allocate space for new entry
     env->count++;
-    env->values = realloc(env->values, LENV_PTR_SIZE * env->count);
-    env->symbols = realloc(env->symbols, CHAR_PTR_SIZE * env->count);
+    env->values  = xrealloc(env->values,  LVAL_PTR_SIZE * env->count);
+    env->symbols = xrealloc(env->symbols, CHAR_PTR_SIZE * env->count);
 
     // Copy contents of lval and symbol string into new location
-    env->values[env->count - 1] = lval_copy(value);
-    env->symbols[env->count - 1] = STRCPY(key->sym, env->symbols[env->count - 1])
+    env->values[env->count - 1]  = lval_copy(value);
+    env->symbols[env->count - 1] = MSTRCPY(key->sym, env->symbols[env->count - 1]);
+}
+
+void lenv_def(lenv* env, lval* key, lval* value) {
+    // Seek parent
+    while (env->parent) {
+        env = env->parent;
+    }
+
+    lenv_put(env, key, value);
+}
+
+char* lenv_func_name(lenv* env, lbuiltin func) {
+    for (int i = 0; i < env->count; i++) {
+        if (env->values[i]->type == LVAL_FUNC && env->values[i]->builtin == func) {
+            return env->symbols[i];
+        }
+    }
+
+    return NULL;
 }

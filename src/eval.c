@@ -1,9 +1,9 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include "lenv.h"
 #include "eval.h"
 
-//static inline bool is_int(float f) { return (f - (int) f == 0); }
 
 lval* eval_sexpr(lenv* env, lval* node) {
     // Evaluate children
@@ -25,21 +25,112 @@ lval* eval_sexpr(lenv* env, lval* node) {
     // Ensure first element is a symbol
     lval* func = lval_pop(node, 0);
     if (func->type != LVAL_FUNC) {
+        char* repr = lval_str(func);
+        lval* error = lval_err("First element is not a function: %s", repr);
+        FREE(repr);
         lval_del(func); lval_del(node);
-        return lval_err("First element is not a function!");
+        return error;
     }
 
     // Call builtin with operator
-    lval* result = func->func(env, node);
+    lval* result = eval_func(env, func, node);
     lval_del(func);
 
     return result;
 }
 
+// TODO: Improvie this code!
+lval* eval_func(lenv* env, lval* func, lval* args) {
+    if (func->builtin) {
+        return func->builtin(env, args);
+    }
+
+    lval* formals = func->formals;
+    // Record argument count
+    int given = args->count;
+    int total = formals->count;
+
+    while (args->count) {
+        // If we ran out of formal arguments to bind
+        if (formals->count == 0) {
+            lval_del(args);
+            char* repr = lval_str(func);
+            lval* err = lval_err("Function '%s' passed too many arguments. Expected %i, got %i.",
+                                 repr, given, total);
+            FREE(repr);
+            return err;
+        }
+
+        lval* symbol = lval_pop(formals, 0);
+
+        if (is_builtin(symbol->sym)) {
+            lval* err =  lval_err("Cannot redefine builtin '%s'.", symbol->sym);
+            lval_del(symbol); lval_del(args);
+            return err;
+        }
+
+        // Handle varargs
+        if (strcmp(symbol->sym, "...") == 0) {
+            // Ensure one symbols follows
+            if (formals->count != 1) {
+                lval_del(symbol); lval_del(args);
+                return lval_err("Function format is invalid: '...' not followed by single symbol.");
+            }
+
+            lval* next_sym = lval_pop(formals, 0);
+            if (is_builtin(next_sym->sym)) {
+                lval* err =  lval_err("Cannot redefine builtin '%s'.", next_sym->sym);
+                lval_del(symbol); lval_del(next_sym); lval_del(args);
+                return err;
+            }
+
+            lenv_put(func->env, next_sym, builtin_list(env, args));
+            lval_del(symbol); lval_del(next_sym);
+            break;
+        }
+
+        lval* value = lval_pop(args, 0);
+
+        lenv_put(func->env, symbol, value);
+
+        lval_del(symbol);
+        lval_del(value);
+    }
+
+    lval_del(args);
+
+    // If '...' has not yet been processed, it should be bound to empty list
+    if (formals->count > 0 && strcmp(formals->values[0]->sym, "...") == 0) {
+        // Ensure that '...' is not passed invalidly
+        if (formals->count != 2) {
+            return lval_err("Function format invalid: '...' not followed by single symbol.");
+        }
+
+        // Delete '...'
+        lval_del(lval_pop(formals, 0));
+
+        lval* symbol = lval_pop(formals, 0);
+        lval* value  = lval_qexpr();
+
+        lenv_put(func->env, symbol, value);
+        lval_del(symbol); lval_del(value);
+    }
+
+    // If all formals have been bound, evaluate
+    if (formals->count == 0) {
+        func->env->parent = env;
+        return builtin_eval(func->env, lval_add(lval_sexpr(), lval_copy(func->body)));
+    } else {
+        return lval_copy(func);
+    }
+}
+
 lval* eval(lenv* env, lval* node) {
     // Evaluate S-Expressions
     if (node->type == LVAL_SYM) {
-        return lenv_get(env, node);
+        lval* value = lenv_get(env, node);
+        lval_del(node);
+        return value;
     } else if (node->type == LVAL_SEXPR) {
         return eval_sexpr(env, node);
     }

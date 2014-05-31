@@ -1,25 +1,50 @@
 #pragma once
 
+#include "stdbool.h"
+
 #include "lval.h"
 #include "eval.h"
 
-#define LERROR(node, msg) lval_del(node); return lval_err(msg);
-#define LASSERT(node, cond, err) if (!(cond)) { LERROR(node, err); }
-#define LASSERT_ARG_COUNT(node, ecount, name) \
-if (node->count > ecount) { \
-    LERROR(node, "Function " #name " passed too many arguments!"); \
-} else if (node->count < ecount) { \
-    LERROR(node, "Function " #name " passed too few arguments!") \
-}
-#define LASSERT_ARG_TYPE(node, i, etype, name) \
-if (!(node->values[i]->type == etype)) { \
-    LERROR(node, "Function " #name " passed incorrect argument types!"); \
-}
-#define LASSERT_ARG_NOT_EMPTY_LIST(node, i, name) \
-if (node->values[i]->count == 0) { \
-    LERROR(node, "Function " #name " passed empty list!"); \
-}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 
+#define LERROR(node, fmt, ...) __extension__({ \
+    lval* error = lval_err(fmt, ##__VA_ARGS__); \
+    lval_del(node); \
+    return error;\
+})
+
+#define LASSERT(node, cond, fmt, ...) __extension__({ \
+    if (!(cond)) { \
+        LERROR(node, fmt, ##__VA_ARGS__); \
+    } \
+})
+
+#define LASSERT_ARG_COUNT(node, ecount, name) \
+    if (node->count > ecount) { \
+        LERROR(node, "Function '%s' passed too many arguments. Expected %i, got %i.", \
+               name, ecount, node->count); \
+    } else if (node->count < ecount) { \
+        LERROR(node, "Function '%s' passed too few arguments. Expected %i, got %i.", \
+               name, ecount, node->count); \
+    }
+
+#define LASSERT_ARG_TYPE(node, i, etype, name) \
+    LASSERT(node, node->values[i]->type == etype, \
+            "Function '%s' passed incorrect argument types. Expected %s, got %s.", \
+            name, lval_str_type(etype), lval_str_type(node->values[i]->type));
+
+#define LASSERT_ARG_NOT_EMPTY_LIST(node, i, name) \
+    LASSERT(node, node->values[i]->count > 0, \
+            "Function '%s' passed empty list.", name);
+
+#pragma GCC diagnostic pop
+
+
+typedef enum def_type { DEF_LOCAL, DEF_GLOBAL } def_type;
+
+
+bool is_builtin(char* name);
 
 void builtins_init(lenv* env);
 
@@ -51,3 +76,9 @@ lval* builtin_join(lenv* env, lval* node);
 lval* builtin_cons(lenv* env, lval* node);
 
 lval* builtin_def(lenv* env, lval* node);
+
+lval* builtin_put(lenv* env, lval* node);
+
+lval* builtin_var(lenv* env, lval* node, def_type type);
+
+lval* builtin_lambda(lenv* env, lval* node);

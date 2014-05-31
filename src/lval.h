@@ -3,14 +3,15 @@
 #include "mpc.h"
 
 #include "config.h"
+#include "utils.h"
 
-// TODO: Better place
-#define STRCPY(src, dst) malloc(strlen(src) + 1); strcpy(dst, src);
-#define RSTRCPY(src, dst) realloc(dst, strlen(src) + 1); strcpy(dst, src);
+#define STR_BUFFER_SIZE 512
 
-#define NEW_LVAL malloc(LVAL_SIZE)
+#define NEW_LVAL() \
+    xmalloc(LVAL_SIZE)
 #define LVAL_SIZE sizeof(lval)
 #define LVAL_PTR_SIZE sizeof(lval*)
+
 
 // Forward declarations
 struct lval;
@@ -18,18 +19,25 @@ struct lenv;
 typedef struct lval lval;
 typedef struct lenv lenv;
 
+lenv* lenv_new(void);
+void lenv_del(lenv* env);
+lenv* lenv_copy(lenv* env);
+
 //! Pointer to builtin function
 typedef lval*(*lbuiltin)(lenv*, lval*);
 
+//! Value types
+typedef enum lval_type { LVAL_SEXPR, LVAL_QEXPR, LVAL_SYM, LVAL_FUNC, LVAL_NUM, LVAL_ERR } lval_type;
+
 //! Value container
 struct lval {
-    int type;
+    lval_type type;
 
     // Data
     union {
         PRECISION num;  // Number type
-        char* err;  // Error type
-        char* sym;  // Symbol type
+        char* err;      // Error type
+        char* sym;      // Symbol type
 
         struct {
             // S-Expr: values
@@ -37,13 +45,15 @@ struct lval {
             struct lval** values;
         };
 
-        lbuiltin func;  // Builtin type
+        struct {
+            lbuiltin builtin;  // Builtin func OR ...
+            lenv* env;         // Lambda
+            lval* formals;
+            lval* body;
+        };
     };
 
 };
-
-//! Value types
-enum { LVAL_SEXPR, LVAL_QEXPR, LVAL_SYM, LVAL_FUNC, LVAL_NUM, LVAL_ERR };
 
 // Constructors & destructor
 lval* lval_sexpr(void);
@@ -54,9 +64,11 @@ lval* lval_sym(char* symbol);
 
 lval* lval_num(PRECISION value);
 
-lval* lval_err(char* message);
+lval* lval_err(char* fmt, ...);
 
 lval* lval_func(lbuiltin func);
+
+lval* lval_lambda(lval* formals, lval* body);
 
 void lval_del(lval* node);
 
@@ -77,8 +89,12 @@ lval* lval_read_num(mpc_ast_t* tree);
 lval* lval_read(mpc_ast_t* tree);
 
 // Printers
-void lval_expr_print(lval* node, char open, char close);
+char* lval_str_type(int type);
 
-void lval_print(lval* node);
+char* lval_str_expr(lval* node, char open, char close);
 
-void lval_println(lval* node);
+char* lval_str(lval* node);
+
+void lval_print(lenv* env, lval* node);
+
+void lval_println(lenv* env, lval* node);
