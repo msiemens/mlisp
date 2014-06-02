@@ -27,7 +27,7 @@ lval* eval_sexpr(lenv* env, lval* node) {
     if (func->type != LVAL_FUNC) {
         char* repr = lval_str(func);
         lval* error = lval_err("First element is not a function: %s", repr);
-        FREE(repr);
+        xfree(repr);
         lval_del(func); lval_del(node);
         return error;
     }
@@ -57,7 +57,7 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
             char* repr = lval_str(func);
             lval* err = lval_err("Function '%s' passed too many arguments. Expected %i, got %i.",
                                  repr, given, total);
-            FREE(repr);
+            xfree(repr);
             return err;
         }
 

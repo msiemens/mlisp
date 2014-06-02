@@ -1,16 +1,13 @@
 #pragma once
 
-#include "mpc.h"
+#if !defined(MLISP_NOINCLUDE)
+    #include "mpc.h"
+#endif
 
 #include "config.h"
 #include "utils.h"
 
 #define STR_BUFFER_SIZE 512
-
-#define NEW_LVAL() \
-    xmalloc(LVAL_SIZE)
-#define LVAL_SIZE sizeof(lval)
-#define LVAL_PTR_SIZE sizeof(lval*)
 
 
 // Forward declarations
@@ -19,15 +16,18 @@ struct lenv;
 typedef struct lval lval;
 typedef struct lenv lenv;
 
-lenv* lenv_new(void);
-void lenv_del(lenv* env);
-lenv* lenv_copy(lenv* env);
+#if !defined(MLISP_NOINCLUDE)
+    lenv* lenv_new(void);
+    void lenv_del(lenv* env);
+    lenv* lenv_copy(lenv* env);
+#endif
 
 //! Pointer to builtin function
 typedef lval*(*lbuiltin)(lenv*, lval*);
 
 //! Value types
-typedef enum lval_type { LVAL_SEXPR, LVAL_QEXPR, LVAL_SYM, LVAL_FUNC, LVAL_NUM, LVAL_ERR } lval_type;
+typedef enum lval_type { LVAL_SEXPR, LVAL_QEXPR, LVAL_SYM, LVAL_FUNC,
+                         LVAL_NUM, LVAL_ERR } lval_type;
 
 //! Value container
 struct lval {
@@ -55,7 +55,13 @@ struct lval {
 
 };
 
+
+static const size_t LVAL_SIZE     = sizeof(lval);
+static const size_t LVAL_PTR_SIZE = sizeof(lval*);
+
 // Constructors & destructor
+lval* lval_new(void);
+
 lval* lval_sexpr(void);
 
 lval* lval_qexpr(void);
@@ -73,6 +79,8 @@ lval* lval_lambda(lval* formals, lval* body);
 void lval_del(lval* node);
 
 lval* lval_copy(lval* node);
+
+int lval_eq(lval* x, lval* y);
 
 // Lvalue modifiers
 lval* lval_add(lval* container, lval* value);
@@ -92,6 +100,8 @@ lval* lval_read(mpc_ast_t* tree);
 char* lval_str_type(int type);
 
 char* lval_str_expr(lval* node, char open, char close);
+
+char* lval_str_func(lval* func);
 
 char* lval_str(lval* node);
 

@@ -6,4 +6,4 @@
 #endif
 
 typedef float PRECISION;
-typedef long PRECISION_INT;
+typedef long  PRECISION_INT;

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "mpc.h"
+#if !defined(MLISP_NOINCLUDE)
+    #include "mpc.h"
+#endif
 
 #include "config.h"
 #include "lval.h"

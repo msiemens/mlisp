@@ -22,3 +22,6 @@
 
 build/
 gen/
+
+*.pyc
+__pycache__

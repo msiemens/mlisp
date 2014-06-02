@@ -1,7 +1,10 @@
 #include "lenv.h"
 
+#define LENV_GET(env, i) \
+    env->values[i]
+
 lenv* lenv_new(void) {
-    lenv* env = NEW_LENV();
+    lenv* env = xmalloc(LENV_SIZE);
     env->parent = NULL;
     env->count = 0;
     env->symbols = NULL;
@@ -12,24 +15,24 @@ lenv* lenv_new(void) {
 
 void lenv_del(lenv* env) {
     for (int i = 0; i < env->count; i++) {
-        FREE(env->symbols[i]);
+        xfree(env->symbols[i]);
         lval_del(env->values[i]);
     }
 
-    if (env->symbols) { FREE(env->symbols); }
-    if (env->values)  { FREE(env->values);  }
-    FREE(env);
+    if (env->symbols) { xfree(env->symbols); }
+    if (env->values)  { xfree(env->values);  }
+    xfree(env);
 }
 
 lenv* lenv_copy(lenv* env) {
-    lenv* copy = NEW_LENV();
+    lenv* copy = xmalloc(LENV_SIZE);
     copy->parent  = env->parent;
     copy->count   = env->count;
     copy->symbols = xmalloc(CHAR_PTR_SIZE * copy->count);
     copy->values  = xmalloc(LVAL_PTR_SIZE * copy->count);
 
     for (int i = 0; i < env->count; i++) {
-        copy->symbols[i] = MSTRCPY(env->symbols[i], copy->symbols[i]);
+        copy->symbols[i] = mstrcpy(env->symbols[i], copy->symbols[i]);
         copy->values[i]  = lval_copy(env->values[i]);
     }
 
@@ -71,7 +74,7 @@ void lenv_put(lenv* env, lval* key, lval* value) {
 
     // Copy contents of lval and symbol string into new location
     env->values[env->count - 1]  = lval_copy(value);
-    env->symbols[env->count - 1] = MSTRCPY(key->sym, env->symbols[env->count - 1]);
+    env->symbols[env->count - 1] = mstrcpy(key->sym, env->symbols[env->count - 1]);
 }
 
 void lenv_def(lenv* env, lval* key, lval* value) {

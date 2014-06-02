@@ -3,8 +3,12 @@
 #include "config.h"
 #include "lval.h"
 
+lval* lval_new(void) {
+    return xmalloc(LVAL_SIZE);
+}
+
 lval* lval_sexpr(void) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_SEXPR;
     node->count = 0;
     node->values = NULL;
@@ -13,7 +17,7 @@ lval* lval_sexpr(void) {
 }
 
 lval* lval_qexpr(void) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_QEXPR;
     node->count = 0;
     node->values = NULL;
@@ -22,15 +26,15 @@ lval* lval_qexpr(void) {
 }
 
 lval* lval_sym(char* symbol) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_SYM;
-    node->sym = MSTRCPY(symbol, node->sym);
+    node->sym = mstrcpy(symbol, node->sym);
 
     return node;
 }
 
 lval* lval_num(PRECISION value) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_NUM;
     node->num = value;
 
@@ -38,18 +42,17 @@ lval* lval_num(PRECISION value) {
 }
 
 lval* lval_err(char* fmt, ...) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_ERR;
 
     va_list va;
     va_start(va, fmt);
 
-    // printf into error string with 511 chars max
-    node->err = xmalloc(STR_BUFFER_SIZE);
-    vsnprintf(node->err, STR_BUFFER_SIZE - 1, fmt, va);
+    size_t required_size = vsnprintf(NULL, 0, fmt, va);
+    node->err = xmalloc(required_size + 1);
+    vsnprintf(node->err, required_size + 1, fmt, va);
 
-    // Reallocate to number of bytes actually used
-    node->err = xrealloc(node->err, strlen(node->err) + 1);
+    //node->err = xrealloc(node->err, strlen(node->err) + 1);
 
     va_end(va);
 
@@ -57,7 +60,7 @@ lval* lval_err(char* fmt, ...) {
 }
 
 lval* lval_func(lbuiltin func) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_FUNC;
     node->builtin = func;
 
@@ -65,7 +68,7 @@ lval* lval_func(lbuiltin func) {
 }
 
 lval* lval_lambda(lval* formals, lval* body) {
-    lval* node = NEW_LVAL();
+    lval* node = lval_new();
     node->type = LVAL_FUNC;
 
     node->builtin = NULL;
@@ -88,8 +91,8 @@ void lval_del(lval* node) {
             break;
 
         // Types with strings
-        case LVAL_ERR: FREE(node->err); break;
-        case LVAL_SYM: FREE(node->sym); break;
+        case LVAL_ERR: xfree(node->err); break;
+        case LVAL_SYM: xfree(node->sym); break;
 
         // Sexpr: Delete all elements inside
         case LVAL_SEXPR:
@@ -100,16 +103,16 @@ void lval_del(lval* node) {
 
             // Free memory allocated to contain the pointers
             if (node->values) {
-                FREE(node->values);
+                xfree(node->values);
             }
             break;
     }
 
-    FREE(node);
+    xfree(node);
 }
 
 lval* lval_copy(lval* node) {
-    lval* copy = NEW_LVAL();
+    lval* copy = lval_new();
     copy->type = node->type;
 
     switch (node->type) {
@@ -129,8 +132,8 @@ lval* lval_copy(lval* node) {
             break;
 
         // Copy strings using malloc and strcpy
-        case LVAL_ERR: copy->err = MSTRCPY(node->err, copy->err); break;
-        case LVAL_SYM: copy->sym = MSTRCPY(node->sym, copy->sym); break;
+        case LVAL_ERR: copy->err = mstrcpy(node->err, copy->err); break;
+        case LVAL_SYM: copy->sym = mstrcpy(node->sym, copy->sym); break;
 
         // Copy lists by copying each subexpression
         case LVAL_SEXPR:
@@ -146,7 +149,46 @@ lval* lval_copy(lval* node) {
     return copy;
 }
 
+int lval_eq(lval* x, lval* y) {
+    if (x->type != y->type) {
+        return 0;
+    }
+
+    switch (x->type) {
+       case LVAL_NUM: return (x->num == y->num);
+
+        case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
+        case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+
+        case LVAL_FUNC:
+            if (x->builtin || y->builtin) {
+                return x->builtin == y->builtin;
+            } else {
+                return lval_eq(x->formals, y->formals) && lval_eq(x->body, y->body);
+            }
+
+        case LVAL_SEXPR:
+        case LVAL_QEXPR:
+            if (x->count != y->count) {
+                return 0;
+            }
+            for (int i = 0; i < x->count; i++) {
+                if (!lval_eq(x->values[i], y->values[i])) {
+                    return 0;
+                }
+            }
+
+            return 1;
+
+    }
+
+    return 0;
+}
+
 lval* lval_add(lval* container, lval* value) {
+    assertf(container->type == LVAL_QEXPR ||
+            container->type == LVAL_SEXPR, "lval_add passed a non-container");
+
     container->count++;
     container->values = xrealloc(container->values,
                                 LVAL_PTR_SIZE * container->count);
@@ -247,13 +289,13 @@ char* lval_str_expr(lval* node, char open, char close) {
         unsigned int tmp_len = strlen(tmp);
 
         buffer_length += tmp_len;
-        STRAPPEND(buffer, tmp, buffer_length);
-        FREE(tmp);
+        buffer = strappend(buffer, tmp, buffer_length);
+        xfree(tmp);
 
         // Print space unless last element
         if (i != (node->count - 1)) {
             buffer_length += 1;
-            STRAPPEND(buffer, " ", buffer_length);
+            buffer = strappend(buffer, " ", buffer_length);
         }
     }
 
@@ -275,32 +317,27 @@ char* lval_str_func(lval* func) {
 
         size_t size = snprintf(NULL, 0, fmt, str_formals, str_body);
         char* buffer = xmalloc(size + 1);
-        snprintf(buffer, STR_BUFFER_SIZE,
-                 "(lambda %s %s)", str_formals, str_body);
+        snprintf(buffer, size + 1, "(lambda %s %s)", str_formals, str_body);
 
-        FREE(str_formals);
-        FREE(str_body);
+        xfree(str_formals);
+        xfree(str_body);
 
         return buffer;
     }
 }
 
 char* lval_str(lval* node) {
-    // FIXME: What, if the buffer is too small!?
-    // See: http://stackoverflow.com/a/1854429/997063
-    char* buffer = xmalloc(STR_BUFFER_SIZE);
-
     switch(node->type) {
-        case LVAL_SEXPR: FREE(buffer); return lval_str_expr(node, '(', ')');
-        case LVAL_QEXPR: FREE(buffer); return lval_str_expr(node, '{', '}');
-        case LVAL_FUNC:  FREE(buffer); return lval_str_func(node);
-        case LVAL_SYM:   snprintf(buffer, STR_BUFFER_SIZE, "%s", node->sym); break;
-        case LVAL_NUM:   snprintf(buffer, STR_BUFFER_SIZE, "%g", node->num); break;
-        case LVAL_ERR:   snprintf(buffer, STR_BUFFER_SIZE, "Error: %s", node->err); break;
+        case LVAL_SEXPR: return lval_str_expr(node, '(', ')');
+        case LVAL_QEXPR: return lval_str_expr(node, '{', '}');
+        case LVAL_FUNC:  return lval_str_func(node);
+        case LVAL_SYM:   return xsprintf("%s", node->sym);
+        case LVAL_NUM:   return xsprintf("%g", node->num);
+        case LVAL_ERR:   return xsprintf("Error: %s", node->err);
         default:         assertf(0, "Encountered invalid lval type: %i", node->type);
     }
 
-    return buffer;
+    return NULL;
 }
 
 // Forward declaration
@@ -317,7 +354,7 @@ void lval_print(lenv* env, lval* node) {
 
     char* repr = lval_str(node);
     printf("%s", repr);
-    FREE(repr);
+    xfree(repr);
 }
 
 void lval_println(lenv* env, lval* node) {

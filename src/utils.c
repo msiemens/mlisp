@@ -1,4 +1,7 @@
+#include <stdarg.h>
+
 #include "utils.h"
+
 
 #if defined (__WIN32__)
     char* strdup(const char * s) {
@@ -9,10 +12,47 @@
     }
 #endif
 
+char* xsprintf(const char* fmt, ...) {
+    va_list va;
+    va_start(va, fmt);
+
+    size_t required_size = vsnprintf(NULL, 0, fmt, va);
+    char* buffer = xmalloc(required_size + 1);
+    vsnprintf(buffer, required_size + 1, fmt, va);
+
+    va_end(va);
+
+    return buffer;
+}
+
+char* strappend(char* dest, char* src, size_t size) {
+    dest = xrealloc(dest, size);
+    strcat(dest, src);
+    return dest;
+}
+
+char* mstrcpy(char* src, char* dest) {
+    dest = xmalloc(strlen(src) + 1);
+    strcpy(dest, src);
+    return dest;
+}
+
+char* rstrcpy(char* src, char* dest) {
+    dest = xrealloc(dest, strlen(src) + 1);
+    strcpy(dest, src);
+    return dest;
+}
+
+void xfree(void* ptr) {
+    assertf(ptr != NULL, "attempt to free a NULL ptr!");
+    free(ptr);
+    ptr = NULL;
+}
+
 void* xmalloc(size_t n) {
     void* ptr = malloc(n);
     if (!ptr && n != 0) {
-        die("Out of memory, malloc failed!\n");
+        die("[FATAL ERROR] Out of memory, malloc failed!\n");
     }
 
     return ptr;
@@ -21,7 +61,7 @@ void* xmalloc(size_t n) {
 void* xrealloc(void* ptr, size_t n) {
     ptr = realloc(ptr, n);
     if (!ptr && n != 0) {
-        die("Out of memory, realloc failed!\n");
+        die("[FATAL ERROR] Out of memory, realloc failed!\n");
     }
 
     return ptr;

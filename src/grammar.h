@@ -1,6 +1,8 @@
 #pragma once
 
-#include "mpc.h"
+#if !defined(MLISP_NOINCLUDE)
+    #include "mpc.h"
+#endif
 
 mpc_parser_t* parser_get();
 

@@ -1,16 +1,13 @@
-#include "config.h"
-#include "grammar.h"
-#include "lval.h"
-#include "lenv.h"
-#include "eval.h"
-#include "builtin.h"
-#include "utils.h"
+#include "mlisp.h"
 
 #ifdef _WIN32
 
 // Do not warn about unused argument
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
+
+void add_history(char* unused) {}
 
 char* readline(char* prompt) {
     // Print prompt
@@ -39,12 +36,10 @@ char* readline(char* prompt) {
     // Trim string
     char* cpy = xmalloc(i + 1);
     strncpy(cpy, input, i + 1);
-    FREE(input);
+    xfree(input);
 
     return cpy;
 }
-
-void add_history(char* unused) {}
 
 #pragma GCC diagnostic pop
 
@@ -71,7 +66,7 @@ int main(void) {
 
         if (strstr(input, "exit") || strstr(input, "quit")) {
             puts("Bye!");
-            FREE(input);
+            xfree(input);
             break;
         }
 
@@ -89,7 +84,7 @@ int main(void) {
             mpc_err_delete(r.error);
         }
 
-        FREE(input);
+        xfree(input);
     }
 
     lenv_del(env);

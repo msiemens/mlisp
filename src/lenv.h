@@ -3,15 +3,6 @@
 #include "utils.h"
 #include "lval.h"
 
-#define LENV_GET(env, i) \
-    env->values[i]
-
-#define NEW_LENV()\
-    xmalloc(LENV_SIZE)
-
-#define LENV_SIZE sizeof(lenv)
-#define LENV_PTR_SIZE sizeof(lenv*)
-#define CHAR_PTR_SIZE sizeof(char*)
 
 //! Environment container
 typedef struct lenv {
@@ -21,6 +12,11 @@ typedef struct lenv {
     char** symbols;
     lval** values;
 } lenv;
+
+
+static const size_t LENV_SIZE     = sizeof(lenv);
+static const size_t LENV_PTR_SIZE = sizeof(lenv*);
+static const size_t CHAR_PTR_SIZE = sizeof(char*);
 
 
 // Constructor & destructor
