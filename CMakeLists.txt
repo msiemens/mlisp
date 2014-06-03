@@ -42,6 +42,10 @@ add_executable(mlisp-bin ${PROJECT_SOURCE_DIR}/src/main.c)
 target_link_libraries(mlisp mpc)
 target_link_libraries(mlisp-bin mlisp mpc)
 
+if (NOT WIN32)
+    target_link_libraries(mlisp-bin readline m)
+endif(NOT WIN32)
+
 # Setting compiler flags
 #################################################################################
 set(CUSTOM_FLAGS "-std=c11")

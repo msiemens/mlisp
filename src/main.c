@@ -45,8 +45,8 @@ char* readline(char* prompt) {
 
 #else
 
-#include <editline/readline.h>
-#include <editline/history.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #endif
 

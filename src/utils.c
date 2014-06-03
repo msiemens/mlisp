@@ -3,14 +3,12 @@
 #include "utils.h"
 
 
-#if defined (__WIN32__)
-    char* strdup(const char * s) {
-        size_t len = strlen(s) + 1;
-        char* p = xmalloc(len);
+char* strdup(const char * s) {
+    size_t len = strlen(s) + 1;
+    char* p = xmalloc(len);
 
-        return p ? memcpy(p, s, len) : NULL;
-    }
-#endif
+    return p ? memcpy(p, s, len) : NULL;
+}
 
 char* xsprintf(const char* fmt, ...) {
     va_list va;

@@ -32,9 +32,7 @@
 #pragma GCC diagnostic pop
 
 
-#if defined (__WIN32__)
-    char* strdup(const char * s);
-#endif
+char* strdup(const char * s);
 
 char* xsprintf(const char* fmt, ...);
 

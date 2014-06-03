@@ -1,9 +1,13 @@
 from os import path
+import os
 import re
 
 BASE_PATH = path.abspath(path.dirname(__file__))
 SRC_DIR = path.join(BASE_PATH, 'src/')
 GEN_DIR = path.join(BASE_PATH, 'gen/')
+
+if not path.exists(GEN_DIR):
+    os.mkdir(GEN_DIR)
 
 COMMENT = '/*__GRAMMAR__*/'
 COMMENT_ESCAPED = re.escape(COMMENT)
