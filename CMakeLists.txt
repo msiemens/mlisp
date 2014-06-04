@@ -12,8 +12,10 @@ set(CMAKE_CXX_COMPILER "clang++")
 
 # Add sources
 #################################################################################
+set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 add_subdirectory(${PROJECT_SOURCE_DIR}/lib)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/builtins)
 
 include_directories(${PROJECT_SOURCE_DIR}/lib/ptest)
 include_directories(${PROJECT_SOURCE_DIR}/lib/mpc)
@@ -22,23 +24,21 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # Configure custom preprocessing
 #################################################################################
-set_source_files_properties(${PROJECT_SOURCE_DIR}/gen/grammar.c
+set_source_files_properties(${PROJECT_SOURCE_DIR}/gen/parser.c
                             PROPERTIES GENERATED true)
 
-add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/gen/grammar.c
+add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/gen/parser.c
                    COMMAND python ../preprocess.py
                    DEPENDS ${PROJECT_SOURCE_DIR}/src/grammar.ebnf
-                   DEPENDS ${PROJECT_SOURCE_DIR}/src/grammar.c)
+                   DEPENDS ${PROJECT_SOURCE_DIR}/src/parser.c)
 
 # Configure executables and libraries
 #################################################################################
 add_library(ptest ${PROJECT_SOURCE_DIR}/lib/ptest/ptest.c)
 add_library(mpc   ${PROJECT_SOURCE_DIR}/lib/mpc/mpc.c)
-add_library(mlisp SHARED
-                  ${PROJECT_SOURCE_DIR}/src/lval.c    ${PROJECT_SOURCE_DIR}/src/lenv.c
-                  ${PROJECT_SOURCE_DIR}/src/builtin.c ${PROJECT_SOURCE_DIR}/gen/grammar.c
-                  ${PROJECT_SOURCE_DIR}/src/eval.c    ${PROJECT_SOURCE_DIR}/src/utils.c)
+add_library(mlisp SHARED ${MLISP_SOURCES})
 add_executable(mlisp-bin ${PROJECT_SOURCE_DIR}/src/main.c)
+
 target_link_libraries(mlisp mpc)
 target_link_libraries(mlisp-bin mlisp mpc)
 

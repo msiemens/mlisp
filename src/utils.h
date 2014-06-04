@@ -7,8 +7,14 @@
     #include <assert.h>
 #endif
 
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
+
+// Don't use __extension__ on non-gnu compilers
+#if (!defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER))
+    #define __extension__(arg) arg
+#endif
 
 //! Prevent compiler from complaining about unused arguments
 #define UNUSED(x) (void)(x)
@@ -38,14 +44,6 @@ char* xsprintf(const char* fmt, ...);
 
 //! Append a src string to a dest string. Need the new dest length
 char* strappend(char* dest, char* src, size_t size);
-
-//! Allocate space for the src and then copy it
-// \returns a pointer to dest
-char* mstrcpy(char* src, char* dest);
-
-//! Resize dst to contain src and then copy it
-// \returns a pointer to dest
-char* rstrcpy(char* src, char* dest);
 
 //! Free a pointer while checking for double free and then setting the ptr to NULL
 void xfree(void* ptr);

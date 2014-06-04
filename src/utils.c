@@ -29,18 +29,6 @@ char* strappend(char* dest, char* src, size_t size) {
     return dest;
 }
 
-char* mstrcpy(char* src, char* dest) {
-    dest = xmalloc(strlen(src) + 1);
-    strcpy(dest, src);
-    return dest;
-}
-
-char* rstrcpy(char* src, char* dest) {
-    dest = xrealloc(dest, strlen(src) + 1);
-    strcpy(dest, src);
-    return dest;
-}
-
 void xfree(void* ptr) {
     assertf(ptr != NULL, "attempt to free a NULL ptr!");
     free(ptr);

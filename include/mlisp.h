@@ -47,8 +47,8 @@
     #include "utils.h"
 #endif
 
-#include "grammar.h"
-#include "builtin.h"
+#include "parser.h"
+#include "builtins/builtin.h"
 #include "eval.h"
 #include "lenv.h"
 #include "lval.h"

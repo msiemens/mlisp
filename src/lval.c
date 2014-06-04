@@ -3,6 +3,7 @@
 #include "config.h"
 #include "lval.h"
 
+
 lval* lval_new(void) {
     return xmalloc(LVAL_SIZE);
 }
@@ -28,7 +29,7 @@ lval* lval_qexpr(void) {
 lval* lval_sym(char* symbol) {
     lval* node = lval_new();
     node->type = LVAL_SYM;
-    node->sym = mstrcpy(symbol, node->sym);
+    node->sym = strdup(symbol);
 
     return node;
 }
@@ -37,6 +38,14 @@ lval* lval_num(PRECISION value) {
     lval* node = lval_new();
     node->type = LVAL_NUM;
     node->num = value;
+
+    return node;
+}
+
+lval* lval_str(char* str) {
+    lval* node = lval_new();
+    node->type = LVAL_STR;
+    node->str = strdup(str);
 
     return node;
 }
@@ -93,6 +102,7 @@ void lval_del(lval* node) {
         // Types with strings
         case LVAL_ERR: xfree(node->err); break;
         case LVAL_SYM: xfree(node->sym); break;
+        case LVAL_STR: xfree(node->str); break;
 
         // Sexpr: Delete all elements inside
         case LVAL_SEXPR:
@@ -132,8 +142,9 @@ lval* lval_copy(lval* node) {
             break;
 
         // Copy strings using malloc and strcpy
-        case LVAL_ERR: copy->err = mstrcpy(node->err, copy->err); break;
-        case LVAL_SYM: copy->sym = mstrcpy(node->sym, copy->sym); break;
+        case LVAL_ERR: copy->err = strdup(node->err); break;
+        case LVAL_SYM: copy->sym = strdup(node->sym); break;
+        case LVAL_STR: copy->str = strdup(node->str); break;
 
         // Copy lists by copying each subexpression
         case LVAL_SEXPR:
@@ -159,6 +170,7 @@ int lval_eq(lval* x, lval* y) {
 
         case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
         case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+        case LVAL_STR: return (strcmp(x->str, y->str) == 0);
 
         case LVAL_FUNC:
             if (x->builtin || y->builtin) {
@@ -238,9 +250,29 @@ lval* lval_read_num(mpc_ast_t* tree) {
     }
 }
 
+lval* lval_read_str(char* contents) {
+    size_t len = strlen(contents);
+
+    // Cut off the final quote character
+    contents[len - 1] = '\0';
+
+    // Copy the string leaving out the first quote character
+    char* unescaped = NULL;
+    unescaped = strdup(contents + 1);
+
+    // Unescape the string
+    unescaped = mpcf_unescape(unescaped);
+
+    lval* node = lval_str(unescaped);
+
+    xfree(unescaped);
+    return node;
+}
+
 lval* lval_read(mpc_ast_t* tree) {
     if      (strstr(tree->tag, "number")) { return lval_read_num(tree); }
     else if (strstr(tree->tag, "symbol")) { return lval_sym(tree->contents); }
+    else if (strstr(tree->tag, "string")) { return lval_read_str(tree->contents); }
 
     lval* expr = NULL;
     // If root (">") or sexpr or qexpr, create empty list
@@ -269,6 +301,7 @@ char* lval_str_type(int type) {
         case LVAL_SEXPR: return "S-Expression";
         case LVAL_QEXPR: return "Q-Expression";
         case LVAL_SYM:   return "symbol";
+        case LVAL_STR:   return "string";
         case LVAL_NUM:   return "number";
         case LVAL_ERR:   return "error";
         case LVAL_FUNC:  return "function";
@@ -276,7 +309,7 @@ char* lval_str_type(int type) {
     }
 }
 
-char* lval_str_expr(lval* node, char open, char close) {
+char* lval_str_expr(lenv* env, lval* node, char open, char close) {
     size_t buffer_length = 2; // open char + \0
 
     char* buffer = xmalloc(buffer_length);
@@ -285,7 +318,7 @@ char* lval_str_expr(lval* node, char open, char close) {
     buffer[0] = open;
 
     for (int i = 0; i < node->count; i++) {
-        char* tmp = lval_str(node->values[i]);
+        char* tmp = lval_repr(env, node->values[i]);
         unsigned int tmp_len = strlen(tmp);
 
         buffer_length += tmp_len;
@@ -307,13 +340,18 @@ char* lval_str_expr(lval* node, char open, char close) {
     return buffer;
 }
 
-char* lval_str_func(lval* func) {
+char* lval_str_func(lenv* env, lval* func) {
     if (func->builtin) {
-        return strdup("<builtin>");
+        char* sym = lenv_func_name(env, func->builtin);
+        if (sym) {
+            return xsprintf("<function %s>", sym);
+        } else {
+            return strdup("<builtin>");
+        }
     } else {
         char* fmt = "(lambda %s %s)";
-        char* str_formals = lval_str(func->formals);
-        char* str_body    = lval_str(func->body);
+        char* str_formals = lval_repr(env, func->formals);
+        char* str_body    = lval_repr(env, func->body);
 
         size_t size = snprintf(NULL, 0, fmt, str_formals, str_body);
         char* buffer = xmalloc(size + 1);
@@ -326,11 +364,17 @@ char* lval_str_func(lval* func) {
     }
 }
 
-char* lval_str(lval* node) {
+char* lval_str_str(lenv* env, lval* node) {
+    UNUSED(env);
+    return strdup(node->str);
+}
+
+char* lval_to_str(lenv* env, lval* node) {
     switch(node->type) {
-        case LVAL_SEXPR: return lval_str_expr(node, '(', ')');
-        case LVAL_QEXPR: return lval_str_expr(node, '{', '}');
-        case LVAL_FUNC:  return lval_str_func(node);
+        case LVAL_SEXPR: return lval_str_expr(env, node, '(', ')');
+        case LVAL_QEXPR: return lval_str_expr(env, node, '{', '}');
+        case LVAL_FUNC:  return lval_str_func(env, node);
+        case LVAL_STR:   return lval_str_str(env, node);
         case LVAL_SYM:   return xsprintf("%s", node->sym);
         case LVAL_NUM:   return xsprintf("%g", node->num);
         case LVAL_ERR:   return xsprintf("Error: %s", node->err);
@@ -340,19 +384,26 @@ char* lval_str(lval* node) {
     return NULL;
 }
 
+char* lval_repr(lenv* env, lval* node) {
+    if (node->type == LVAL_STR) {
+        char* escaped = NULL;
+        escaped = strdup(node->str);
+        escaped = mpcf_escape(escaped);
+
+        char* quoted = xsprintf("\"%s\"", escaped);
+        xfree(escaped);
+
+        return quoted;
+    } else {
+        return lval_to_str(env, node);
+    }
+}
+
 // Forward declaration
 char* lenv_func_name(lenv* env, lbuiltin func);
 
 void lval_print(lenv* env, lval* node) {
-    if (node->type == LVAL_FUNC && node->builtin) {
-        char* sym = lenv_func_name(env, node->builtin);
-        if (sym) {
-            printf("<function '%s'>", sym);
-            return;
-        }
-    }
-
-    char* repr = lval_str(node);
+    char* repr = lval_to_str(env, node);
     printf("%s", repr);
     xfree(repr);
 }

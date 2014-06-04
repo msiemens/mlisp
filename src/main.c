@@ -50,41 +50,58 @@ char* readline(char* prompt) {
 
 #endif
 
-int main(void) {
-    // Welcome message
-    puts("MLisp Version 0.0.0.0.2");
-    puts("Enter 'quit' to exit\n");
-
+int main(int argc, char** argv) {
     // Initialization
     mpc_parser_t* Lispy = parser_get();
     lenv* env = lenv_new();
     builtins_init(env);
 
-    while (1) {
-        char* input = readline(">>> ");
-        add_history(input);
+    if (argc >= 2) {
+        // Loop over file names
+        for (int i = 1; i < argc; i++) {
+            lval* args   = lval_add(lval_sexpr(), lval_str(argv[i]));
+            lval* result = builtin_load(env, args);
 
-        if (strstr(input, "exit") || strstr(input, "quit")) {
-            puts("Bye!");
-            xfree(input);
-            break;
-        }
-
-        // Attempt to parse the user input
-        mpc_result_t r;
-        if (mpc_parse("<stdin>", input, Lispy, &r)) {
-            // On success evaluate the AST, print the result and delete the AST
-            lval* result = eval(env, lval_read(r.output));
-            lval_println(env, result);
+            if (result->type == LVAL_ERR) {
+                lval_println(env, result);
+            }
             lval_del(result);
-            mpc_ast_delete(r.output);
-        } else {
-            // Otherwise print and delete the Error
-            mpc_err_print(r.error);
-            mpc_err_delete(r.error);
         }
+    } else {
+        // Welcome message
+        puts("MLisp Version 0.0.0.0.2");
+        puts("Enter 'quit' to exit\n");
 
-        xfree(input);
+        while (1) {
+            char* input = readline(">>> ");
+            add_history(input);
+
+            if (strstr(input, "exit") || strstr(input, "quit")) {
+                puts("Bye!");
+                xfree(input);
+                break;
+            }
+
+            // Attempt to parse the user input
+            mpc_result_t r;
+            if (mpc_parse("<stdin>", input, Lispy, &r)) {
+                // On success evaluate the AST, print the result and delete the AST
+                lval* result = eval(env, lval_read(r.output));
+                if (!(result->type == LVAL_SEXPR && result->count == 0)) {
+                    char* repr = lval_repr(env, result);
+                    printf("%s\n", repr);
+                    xfree(repr);
+                }
+                lval_del(result);
+                mpc_ast_delete(r.output);
+            } else {
+                // Otherwise print and delete the Error
+                mpc_err_print(r.error);
+                mpc_err_delete(r.error);
+            }
+
+            xfree(input);
+        }
     }
 
     lenv_del(env);

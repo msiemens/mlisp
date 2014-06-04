@@ -25,7 +25,7 @@ lval* eval_sexpr(lenv* env, lval* node) {
     // Ensure first element is a symbol
     lval* func = lval_pop(node, 0);
     if (func->type != LVAL_FUNC) {
-        char* repr = lval_str(func);
+        char* repr = lval_to_str(env, func);
         lval* error = lval_err("First element is not a function: %s", repr);
         xfree(repr);
         lval_del(func); lval_del(node);
@@ -54,7 +54,7 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
         // If we ran out of formal arguments to bind
         if (formals->count == 0) {
             lval_del(args);
-            char* repr = lval_str(func);
+            char* repr = lval_to_str(env, func);
             lval* err = lval_err("Function '%s' passed too many arguments. Expected %i, got %i.",
                                  repr, given, total);
             xfree(repr);
@@ -62,12 +62,6 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
         }
 
         lval* symbol = lval_pop(formals, 0);
-
-        if (is_builtin(symbol->sym)) {
-            lval* err =  lval_err("Cannot redefine builtin '%s'.", symbol->sym);
-            lval_del(symbol); lval_del(args);
-            return err;
-        }
 
         // Handle varargs
         if (strcmp(symbol->sym, "...") == 0) {
@@ -78,11 +72,6 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
             }
 
             lval* next_sym = lval_pop(formals, 0);
-            if (is_builtin(next_sym->sym)) {
-                lval* err =  lval_err("Cannot redefine builtin '%s'.", next_sym->sym);
-                lval_del(symbol); lval_del(next_sym); lval_del(args);
-                return err;
-            }
 
             lenv_put(func->env, next_sym, builtin_list(env, args));
             lval_del(symbol); lval_del(next_sym);

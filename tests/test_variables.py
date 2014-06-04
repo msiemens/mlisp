@@ -5,12 +5,6 @@ mlisp_builtins = ["+", "-", "*", "/", "%", "head", "tail", "list",
                   "eval", "join", "cons", "def", "=", "lambda"]
 
 
-def test_redefine():
-    for b in mlisp_builtins:
-        with run('def {%s} {}' % b) as r:
-            assert is_error(r, 'Cannot redefine builtin \'%s\'.' % b)
-
-
 def test_qexpr():
     with run('{}') as r:
         assert is_qexpr(r) and is_empty(r)

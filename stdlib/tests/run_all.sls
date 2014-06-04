@@ -1,0 +1,1 @@
+(load "../stdlib/tests/basic.sls")

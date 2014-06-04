@@ -116,20 +116,9 @@ def test_lambda():
     with run('(lambda {x ... a} {a}) 1 2') as r:
         assert is_qexpr(r) and is_int_list(r, [2])
 
-    with run('(lambda {x eval} {}) 1 2') as r:
-        assert is_error(r, 'Cannot redefine builtin \'eval\'.')
-
-    with run('(lambda {x ... eval} {}) 1 2') as r:
-        assert is_error(r, 'Cannot redefine builtin \'eval\'.')
-
     reset_env()
 
 
-if __name__ == '__main__':
-    test_list()
-    test_head()
-    test_tail()
-    test_eval()
-    test_join()
-    test_cons()
-    test_lambda()
+def test_repr():
+    with run('repr "a"') as r:
+        assert is_string(r, '"a"')

@@ -4,8 +4,10 @@
     #include "stdbool.h"
 #endif
 
+#include "parser.h"
 #include "lval.h"
 #include "eval.h"
+
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -63,6 +65,21 @@ void builtins_init(lenv* env);
 void builtin_create(lenv* env, lbuiltin func, char* name);
 
 
+lval* builtin_load(lenv* env, lval* node);
+
+lval* builtin_println(lenv* env, lval* node);
+
+lval* builtin_print(lenv* env, lval* node);
+
+lval* builtin_display(lenv* env, lval* node, int newline);
+
+lval* builtin_repr(lenv* env, lval* node);
+
+lval* builtin_error(lenv* env, lval* node);
+
+lval* builtin_eval(lenv* env, lval* node);
+
+
 lval* builtin_add(lenv* env, lval* node);
 
 lval* builtin_sub(lenv* env, lval* node);
@@ -74,6 +91,7 @@ lval* builtin_div(lenv* env, lval* node);
 lval* builtin_mod(lenv* env, lval* node);
 
 lval* builtin_op(lenv* env, lval* node, char op);
+
 
 lval* builtin_gt(lenv* env, lval* node);
 
@@ -99,17 +117,17 @@ lval* builtin_not(lenv* env, lval* node);
 
 lval* builtin_if(lenv* env, lval* node);
 
+
 lval* builtin_head(lenv* env, lval* node);
 
 lval* builtin_tail(lenv* env, lval* node);
 
 lval* builtin_list(lenv* env, lval* node);
 
-lval* builtin_eval(lenv* env, lval* node);
-
 lval* builtin_join(lenv* env, lval* node);
 
 lval* builtin_cons(lenv* env, lval* node);
+
 
 lval* builtin_def(lenv* env, lval* node);
 

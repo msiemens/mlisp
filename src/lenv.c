@@ -1,7 +1,9 @@
 #include "lenv.h"
 
+
 #define LENV_GET(env, i) \
     env->values[i]
+
 
 lenv* lenv_new(void) {
     lenv* env = xmalloc(LENV_SIZE);
@@ -32,7 +34,7 @@ lenv* lenv_copy(lenv* env) {
     copy->values  = xmalloc(LVAL_PTR_SIZE * copy->count);
 
     for (int i = 0; i < env->count; i++) {
-        copy->symbols[i] = mstrcpy(env->symbols[i], copy->symbols[i]);
+        copy->symbols[i] = strdup(env->symbols[i]);
         copy->values[i]  = lval_copy(env->values[i]);
     }
 
@@ -74,7 +76,7 @@ void lenv_put(lenv* env, lval* key, lval* value) {
 
     // Copy contents of lval and symbol string into new location
     env->values[env->count - 1]  = lval_copy(value);
-    env->symbols[env->count - 1] = mstrcpy(key->sym, env->symbols[env->count - 1]);
+    env->symbols[env->count - 1] = strdup(key->sym);
 }
 
 void lenv_def(lenv* env, lval* key, lval* value) {

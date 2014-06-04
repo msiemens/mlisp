@@ -64,6 +64,10 @@ class lval(object):
             self.err = ffi.string(obj.err)
             self._repr = '<lval error: "%s">' % self.err
 
+        elif self.type == lib.LVAL_STR:
+            self.str = ffi.string(obj.str)
+            self._repr = '<lval string: "%s">' % self.str
+
         elif self.type in (lib.LVAL_QEXPR, lib.LVAL_SEXPR):
             rname = 'qexpr' if self.type == lib.LVAL_QEXPR else 'sexpr'
             self._repr = '<lval %s: %s>' % (rname, self)
@@ -89,7 +93,7 @@ class lval(object):
         return self._repr
 
     def __str__(self):
-        return ffi.string(lib.lval_str(self.obj))
+        return ffi.string(lib.lval_to_str(env, self.obj))
 
 #################################################################################
 # Initialization
@@ -148,6 +152,16 @@ def is_number(x, val=None):
         return True
 
 
+def is_string(x, val=None):
+    if not x.type == lib.LVAL_STR:
+        return False
+
+    if val:
+        return x.str == val
+    else:
+        return True
+
+
 def is_error(x, val=None):
     if not x.type == lib.LVAL_ERR:
         return False
@@ -191,5 +205,5 @@ def is_func(x, val=None):
         return True
 
 __all__ = ('lib', 'init', 'reset_env', 'run', 'run_single',
-           'is_number', 'is_error', 'is_qexpr', 'is_sexpr', 'is_func',
-           'is_empty', 'is_int_list')
+           'is_number', 'is_string', 'is_error', 'is_qexpr', 'is_sexpr',
+           'is_func', 'is_empty', 'is_int_list')

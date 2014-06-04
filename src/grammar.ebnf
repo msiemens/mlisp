@@ -2,8 +2,9 @@ number  : /(-?[0-9]+(\.[0-9]+)?)/ ;
 # Either a name without numbers or with numbers
 # 'with numbers' is more limited to avoid confusion with float numbers
 symbol  : /[a-zA-Z_+\-*\/\\=<>!\?&%\.]+|[0-9]+[a-zA-Z_+\-*\/\\=<>\?!&%]+[0-9]*[a-zA-Z_+\-*\/\\=<>!\?&%]*/ ;
-comment : /;[^\\r\\n]*/ ;
+comment : /;[^\r\n]*/ ;
 sexpr   : '(' <expr>* ')' ;
 qexpr   : '{' <expr>* '}' ;
-expr    : <symbol> | <number> | <comment> | <sexpr> | <qexpr> ;
+string  : /\"(\\.|[^\"])*\"/ ;
+expr    : <symbol> | <number> | <string> | <comment> | <sexpr> | <qexpr> ;
 lispy   : /^/ <expr>* /$/ ;

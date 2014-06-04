@@ -7,7 +7,8 @@
 #include "config.h"
 #include "lval.h"
 #include "lenv.h"
-#include "builtin.h"
+#include "builtins/builtin.h"
+
 
 lval* eval_sexpr(lenv* env, lval* node);
 
