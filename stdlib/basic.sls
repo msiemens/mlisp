@@ -174,8 +174,9 @@
 ; Unit tests
 
 (function {test cmd expected} {
-    do  (= {result} (eval cmd))
-        (if (!= (eval cmd) expected)
+    do
+        (= {result} (eval cmd))
+        (if (!= (eval cmd) result)
             {do (println   "Test" cmd "==" expected "failed, actual result:" result)
                 (false) }
             {true} )

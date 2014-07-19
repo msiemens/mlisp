@@ -1,99 +1,71 @@
 #include "lenv.h"
 
 
-#define LENV_GET(env, i) \
-    env->values[i]
-
-
 lenv* lenv_new(void) {
-    lenv* env = xmalloc(LENV_SIZE);
+    lenv* env = xmalloc(sizeof(lenv));
     env->parent = NULL;
-    env->count = 0;
-    env->symbols = NULL;
-    env->values = NULL;
+    env->values = hash_new();
 
     return env;
 }
 
 void lenv_del(lenv* env) {
-    for (int i = 0; i < env->count; i++) {
-        xfree(env->symbols[i]);
-        lval_del(env->values[i]);
-    }
+    hash_each_val(env->values, {
+        lval_del(val);
+    });
+    hash_free(env->values);
 
-    if (env->symbols) { xfree(env->symbols); }
-    if (env->values)  { xfree(env->values);  }
     xfree(env);
 }
 
 lenv* lenv_copy(lenv* env) {
-    lenv* copy = xmalloc(LENV_SIZE);
-    copy->parent  = env->parent;
-    copy->count   = env->count;
-    copy->symbols = xmalloc(CHAR_PTR_SIZE * copy->count);
-    copy->values  = xmalloc(LVAL_PTR_SIZE * copy->count);
+    lenv* copy = lenv_new();
 
-    for (int i = 0; i < env->count; i++) {
-        copy->symbols[i] = strdup(env->symbols[i]);
-        copy->values[i]  = lval_copy(env->values[i]);
-    }
+    // FIXME: I suspect copying every single variable into the new env makes
+    // it very slow (?) to search for a variable because for every single parent
+    // we encounter the same variables again...
+
+    //if (env->parent) {
+    hash_each(env->values, {
+        //if (!hash_has(env->parent->values, strdup(key))) {
+        hash_set(copy->values, strdup(key), lval_copy(val));
+        //}
+    });
+    //}
 
     return copy;
 }
 
-lval* lenv_get(lenv* env, lval* key) {
-    for (int i = 0; i < env->count; i++) {
-        // Check if the stored string matches the symbol string
-        // If it does, return a copy of the value
-        if (strcmp(env->symbols[i], key->sym) == 0) {
-            return lval_copy(env->values[i]);
-        }
-    }
+lval* lenv_get(lenv* env, lval* name) {
+    do {
+        lval* value = hash_get(env->values, name->sym);
+        if (value) { return lval_copy(value); }
+    } while ((env = env->parent) != NULL);
 
-    if (env->parent) {
-        return lenv_get(env->parent, key);
-    } else {
-        return lval_err("Unbound symbol: '%s'", key->sym);
-    }
+    return lval_err("Unbound symbol: '%s'", name->sym);
 }
 
-void lenv_put(lenv* env, lval* key, lval* value) {
-    // Check, if variable already exists
-    for (int i = 0; i < env->count; i++) {
-        // If variable is found, delete item at that position and replace with
-        // variable supplied by the user
-        if (strcmp(env->symbols[i], key->sym) == 0) {
-            lval_del(env->values[i]);
-            env->values[i] = lval_copy(value);
-            return;
-        }
-    }
-
-    // Allocate space for new entry
-    env->count++;
-    env->values  = xrealloc(env->values,  LVAL_PTR_SIZE * env->count);
-    env->symbols = xrealloc(env->symbols, CHAR_PTR_SIZE * env->count);
-
-    // Copy contents of lval and symbol string into new location
-    env->values[env->count - 1]  = lval_copy(value);
-    env->symbols[env->count - 1] = strdup(key->sym);
+void lenv_put(lenv* env, lval* name, lval* value) {
+    hash_set(env->values, strdup(name->sym), lval_copy(value));
+    assertf(hash_has(env->values, name->sym), "insert failed");
 }
 
-void lenv_def(lenv* env, lval* key, lval* value) {
+void lenv_def(lenv* env, lval* name, lval* value) {
     // Seek parent
     while (env->parent) {
         env = env->parent;
     }
 
-    lenv_put(env, key, value);
+    lenv_put(env, name, value);
 }
 
 char* lenv_func_name(lenv* env, lbuiltin func) {
-    for (int i = 0; i < env->count; i++) {
-        if (env->values[i]->type == LVAL_FUNC && env->values[i]->builtin == func) {
-            return env->symbols[i];
+    hash_each(env->values, {
+        lval* value = val;
+        if (value->type == LVAL_FUNC && value->builtin == func) {
+            return strdup(key);
         }
-    }
+    });
 
     return NULL;
 }

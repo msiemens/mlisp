@@ -39,13 +39,14 @@ lval* eval_sexpr(lenv* env, lval* node) {
     return result;
 }
 
-// TODO: Improvie this code!
+// TODO: Improve this code!
 lval* eval_func(lenv* env, lval* func, lval* args) {
     if (func->builtin) {
         return func->builtin(env, args);
     }
 
     lval* formals = func->formals;
+
     // Record argument count
     int given = args->count;
     int total = formals->count;
@@ -63,7 +64,7 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
 
         lval* symbol = lval_pop(formals, 0);
 
-        // Handle varargs
+        // Handle var-args
         if (strcmp(symbol->sym, "...") == 0) {
             // Ensure one symbols follows
             if (formals->count != 1) {
@@ -98,6 +99,7 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
         // Delete '...'
         lval_del(lval_pop(formals, 0));
 
+        // FIXME: Comment
         lval* symbol = lval_pop(formals, 0);
         lval* value  = lval_qexpr();
 
@@ -115,12 +117,13 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
 }
 
 lval* eval(lenv* env, lval* node) {
-    // Evaluate S-Expressions
     if (node->type == LVAL_SYM) {
+        // Get value of variable
         lval* value = lenv_get(env, node);
         lval_del(node);
         return value;
     } else if (node->type == LVAL_SEXPR) {
+        // Evaluate S-Expressions
         return eval_sexpr(env, node);
     }
 

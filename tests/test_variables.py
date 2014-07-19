@@ -56,4 +56,4 @@ def test_misc():
         assert is_qexpr(r)
         assert is_int_list(r, [1, 2])
 
-    reset_env()
+    reset_env()  # FIXME: Sometimes sigsegv??

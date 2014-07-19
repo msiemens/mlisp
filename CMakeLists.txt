@@ -1,6 +1,8 @@
 project(mlisp)
 cmake_minimum_required(VERSION 2.6)
 
+set(CMAKE_BUILD_TYPE "Debug")
+
 # Setting the compiler
 #################################################################################
 set(CMAKE_C_COMPILER "clang")
@@ -16,9 +18,10 @@ set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 add_subdirectory(${PROJECT_SOURCE_DIR}/lib)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/builtins)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/profiler)
 
-include_directories(${PROJECT_SOURCE_DIR}/lib/ptest)
 include_directories(${PROJECT_SOURCE_DIR}/lib/mpc)
+include_directories(${PROJECT_SOURCE_DIR}/lib/hash)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
@@ -32,15 +35,37 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/gen/parser.c
                    DEPENDS ${PROJECT_SOURCE_DIR}/src/grammar.ebnf
                    DEPENDS ${PROJECT_SOURCE_DIR}/src/parser.c)
 
+# Configure custom postprocessing
+#################################################################################
+set(GENERATE_PDB "false" CACHE BOOL "Generate .pdb files for Visual Studio using cv2pdb")
+
+if (GENERATE_PDB)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/mlisp.pdb
+                       COMMAND cv2pdb.exe ${CMAKE_BINARY_DIR}/mlisp.exe
+                       COMMENT "Generating pdb file for mlisp.exe"
+                       DEPENDS mlisp-bin)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/libmlisp.pdb
+                       COMMAND cv2pdb.exe ${CMAKE_BINARY_DIR}/libmlisp.dll
+                       COMMENT "Generating pdb file for libmlisp.dll"
+                       DEPENDS libmlisp)
+    add_custom_target(generate_pdb ALL
+                       DEPENDS ${CMAKE_BINARY_DIR}/mlisp.pdb
+                       DEPENDS ${CMAKE_BINARY_DIR}/libmlisp.pdb)
+endif(GENERATE_PDB)
+
 # Configure executables and libraries
 #################################################################################
-add_library(ptest ${PROJECT_SOURCE_DIR}/lib/ptest/ptest.c)
-add_library(mpc   ${PROJECT_SOURCE_DIR}/lib/mpc/mpc.c)
-add_library(mlisp SHARED ${MLISP_SOURCES})
-add_executable(mlisp-bin ${PROJECT_SOURCE_DIR}/src/main.c)
+add_library(mpc               ${PROJECT_SOURCE_DIR}/lib/mpc/mpc.c)
+add_library(hash              ${PROJECT_SOURCE_DIR}/lib/hash/hash.c)
+add_library(profiler          ${PROFILER_SOURCES})
+add_library(mlisp OBJECT      ${MLISP_SOURCES})
+add_library(libmlisp SHARED   $<TARGET_OBJECTS:mlisp>)
+add_executable(mlisp-bin      $<TARGET_OBJECTS:mlisp> ${PROJECT_SOURCE_DIR}/src/main.c)
+add_executable(mlisp-profiler $<TARGET_OBJECTS:mlisp> ${PROJECT_SOURCE_DIR}/src/profiler/main.c)
 
-target_link_libraries(mlisp mpc)
-target_link_libraries(mlisp-bin mlisp mpc)
+target_link_libraries(libmlisp mpc hash)
+target_link_libraries(mlisp-bin mpc hash)
+target_link_libraries(mlisp-profiler profiler mpc hash)
 
 if (NOT WIN32)
     target_link_libraries(mlisp-bin readline m)
@@ -51,10 +76,15 @@ endif(NOT WIN32)
 set(CUSTOM_FLAGS "-std=c11")
 set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -pedantic -Wextra -Wall")
 set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wuninitialized -Wmissing-declarations -Winit-self")
+set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wstrict-aliasing")
+set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -fstrict-aliasing")
 if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
-set_target_properties(mlisp     PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
-set_target_properties(mlisp-bin PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
-set_target_properties(mlisp-bin PROPERTIES OUTPUT_NAME mlisp)
+set_target_properties(mlisp          PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
+set_target_properties(mlisp-bin      PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
+set_target_properties(mlisp-profiler PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
+
+set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME libmlisp)
+set_target_properties(mlisp-bin      PROPERTIES OUTPUT_NAME mlisp)

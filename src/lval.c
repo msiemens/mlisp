@@ -1,10 +1,18 @@
 #include <stdio.h>
 
-#include "config.h"
 #include "lval.h"
+
+/// Wether a node is a list-like object.
+#define is_list_like(node) (node->type == LVAL_SEXPR || node->type == LVAL_QEXPR)
+
+#if defined(DEBUG)
+    static long allocated_count = 0;
+    static long deallocated_count = 0;
+#endif
 
 
 lval* lval_new(void) {
+    DEBUG_ONLY(allocated_count += 1);
     return xmalloc(LVAL_SIZE);
 }
 
@@ -27,6 +35,8 @@ lval* lval_qexpr(void) {
 }
 
 lval* lval_sym(char* symbol) {
+    assert_not_null(symbol);
+
     lval* node = lval_new();
     node->type = LVAL_SYM;
     node->sym = strdup(symbol);
@@ -34,7 +44,7 @@ lval* lval_sym(char* symbol) {
     return node;
 }
 
-lval* lval_num(PRECISION value) {
+lval* lval_num(PRECISION_FLOAT value) {
     lval* node = lval_new();
     node->type = LVAL_NUM;
     node->num = value;
@@ -43,6 +53,8 @@ lval* lval_num(PRECISION value) {
 }
 
 lval* lval_str(char* str) {
+    assert_not_null(str);
+
     lval* node = lval_new();
     node->type = LVAL_STR;
     node->str = strdup(str);
@@ -51,6 +63,8 @@ lval* lval_str(char* str) {
 }
 
 lval* lval_err(char* fmt, ...) {
+    assert_not_null(fmt);
+
     lval* node = lval_new();
     node->type = LVAL_ERR;
 
@@ -60,8 +74,6 @@ lval* lval_err(char* fmt, ...) {
     size_t required_size = vsnprintf(NULL, 0, fmt, va);
     node->err = xmalloc(required_size + 1);
     vsnprintf(node->err, required_size + 1, fmt, va);
-
-    //node->err = xrealloc(node->err, strlen(node->err) + 1);
 
     va_end(va);
 
@@ -77,6 +89,9 @@ lval* lval_func(lbuiltin func) {
 }
 
 lval* lval_lambda(lval* formals, lval* body) {
+    assert_not_null(formals);
+    assert_not_null(body);
+
     lval* node = lval_new();
     node->type = LVAL_FUNC;
 
@@ -89,6 +104,10 @@ lval* lval_lambda(lval* formals, lval* body) {
 }
 
 void lval_del(lval* node) {
+    assert_not_null(node);
+
+    DEBUG_ONLY(deallocated_count += 1);
+
     switch(node->type) {
         case LVAL_NUM: break;
         case LVAL_FUNC:
@@ -116,12 +135,16 @@ void lval_del(lval* node) {
                 xfree(node->values);
             }
             break;
+        default:
+            assertf(0, "Invalid lval type: %i", node->type);
     }
 
     xfree(node);
 }
 
 lval* lval_copy(lval* node) {
+    assert_not_null(node);
+
     lval* copy = lval_new();
     copy->type = node->type;
 
@@ -141,7 +164,7 @@ lval* lval_copy(lval* node) {
             }
             break;
 
-        // Copy strings using malloc and strcpy
+        // Copy strings
         case LVAL_ERR: copy->err = strdup(node->err); break;
         case LVAL_SYM: copy->sym = strdup(node->sym); break;
         case LVAL_STR: copy->str = strdup(node->str); break;
@@ -151,26 +174,32 @@ lval* lval_copy(lval* node) {
         case LVAL_QEXPR:
             copy->count  = node->count;
             copy->values = xmalloc(LVAL_PTR_SIZE * node->count);
+
             for (int i = 0; i < node->count; i++) {
                 copy->values[i] = lval_copy(node->values[i]);
             }
             break;
+        default:
+            assertf(0, "Invalid lval type: %i", node->type);
     }
 
     return copy;
 }
 
-int lval_eq(lval* x, lval* y) {
+bool lval_eq(lval* x, lval* y) {
+    assert_not_null(x);
+    assert_not_null(y);
+
     if (x->type != y->type) {
-        return 0;
+        return false;
     }
 
     switch (x->type) {
-       case LVAL_NUM: return (x->num == y->num);
+        case LVAL_NUM: return (x->num == y->num);
 
-        case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
-        case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
-        case LVAL_STR: return (strcmp(x->str, y->str) == 0);
+        case LVAL_ERR: return (strcmp(x->err, y->err) == false);
+        case LVAL_SYM: return (strcmp(x->sym, y->sym) == false);
+        case LVAL_STR: return (strcmp(x->str, y->str) == false);
 
         case LVAL_FUNC:
             if (x->builtin || y->builtin) {
@@ -182,34 +211,35 @@ int lval_eq(lval* x, lval* y) {
         case LVAL_SEXPR:
         case LVAL_QEXPR:
             if (x->count != y->count) {
-                return 0;
+                return false;
             }
             for (int i = 0; i < x->count; i++) {
                 if (!lval_eq(x->values[i], y->values[i])) {
-                    return 0;
+                    return false;
                 }
             }
 
-            return 1;
-
+            return true;
     }
 
-    return 0;
+    return false;
 }
 
 lval* lval_add(lval* container, lval* value) {
-    assertf(container->type == LVAL_QEXPR ||
-            container->type == LVAL_SEXPR, "lval_add passed a non-container");
+    assert_list_like(container);
 
     container->count++;
     container->values = xrealloc(container->values,
-                                LVAL_PTR_SIZE * container->count);
+                                 LVAL_PTR_SIZE * container->count);
     container->values[container->count - 1] = value;
 
     return container;
 }
 
 lval* lval_join(lval* first, lval* second) {
+    assert_list_like(first);
+    assert_list_like(second);
+
     // For each value in 'second', add it to 'first'
     while (second->count) {
         first = lval_add(first, lval_pop(second, 0));
@@ -219,84 +249,34 @@ lval* lval_join(lval* first, lval* second) {
     return first;
 }
 
-lval* lval_pop(lval* node, int index) {
-    lval* item = node->values[index];
+lval* lval_pop(lval* container, int index) {
+    assert_list_like(container);
+    assert_arg(container, container->count > 0, "count is %i (<= 0)", container->count);
+    assert_arg(index, index >= 0, "is %i (< 0)", index);
+    assert_arg(index, index <= container->count, "is %i (< container->count = %i)", index, container->count);
+
+    lval* item = container->values[index];
 
     // Shift memory following the item at 'index' over the top of it
-    memmove(&node->values[index], &node->values[index + 1],
-            LVAL_PTR_SIZE * (node->count - index - 1));
+    memmove(&container->values[index], &container->values[index + 1],
+            LVAL_PTR_SIZE * (container->count - index - 1));
 
-    node->count--;
+    container->count--;
 
     // Reallocate the memory used
-    node->values = xrealloc(node->values, LVAL_PTR_SIZE * node->count);
+    container->values = xrealloc(container->values, LVAL_PTR_SIZE * container->count);
 
     return item;
 }
 
-lval* lval_take(lval* node, int index) {
-    lval* item = lval_pop(node, index);
-    lval_del(node);
+lval* lval_take(lval* container, int index) {
+    lval* item = lval_pop(container, index);
+    lval_del(container);
 
     return item;
 }
 
-lval* lval_read_num(mpc_ast_t* tree) {
-    PRECISION val = strtod(tree->contents, NULL);
-    if (errno != ERANGE) {
-        return lval_num(val);
-    } else {
-        return lval_err("Invalid number: %s", tree->contents);
-    }
-}
-
-lval* lval_read_str(char* contents) {
-    size_t len = strlen(contents);
-
-    // Cut off the final quote character
-    contents[len - 1] = '\0';
-
-    // Copy the string leaving out the first quote character
-    char* unescaped = NULL;
-    unescaped = strdup(contents + 1);
-
-    // Unescape the string
-    unescaped = mpcf_unescape(unescaped);
-
-    lval* node = lval_str(unescaped);
-
-    xfree(unescaped);
-    return node;
-}
-
-lval* lval_read(mpc_ast_t* tree) {
-    if      (strstr(tree->tag, "number")) { return lval_read_num(tree); }
-    else if (strstr(tree->tag, "symbol")) { return lval_sym(tree->contents); }
-    else if (strstr(tree->tag, "string")) { return lval_read_str(tree->contents); }
-
-    lval* expr = NULL;
-    // If root (">") or sexpr or qexpr, create empty list
-    if (strcmp(tree->tag, ">") == 0)     { expr = lval_sexpr(); }
-    else if (strstr(tree->tag, "sexpr")) { expr = lval_sexpr(); }
-    else if (strstr(tree->tag, "qexpr")) { expr = lval_qexpr(); }
-    else { assertf(0, "Unkown tag containing elements"); }
-
-    // Fill this list with any valid expression contained within
-    for (int i = 0; i < tree->children_num; i++) {
-        if      (strstr(tree->children[i]->tag, "comment"))     { continue; }
-        else if (strcmp(tree->children[i]->contents, "(") == 0) { continue; }
-        else if (strcmp(tree->children[i]->contents, ")") == 0) { continue; }
-        else if (strcmp(tree->children[i]->contents, "{") == 0) { continue; }
-        else if (strcmp(tree->children[i]->contents, "}") == 0) { continue; }
-        else if (strcmp(tree->children[i]->tag, "regex") == 0)  { continue; }
-
-        expr = lval_add(expr, lval_read(tree->children[i]));
-    }
-
-    return expr;
-}
-
-char* lval_str_type(int type) {
+char* lval_str_type(lval_type type) {
     switch (type) {
         case LVAL_SEXPR: return "S-Expression";
         case LVAL_QEXPR: return "Q-Expression";
@@ -349,14 +329,11 @@ char* lval_str_func(lenv* env, lval* func) {
             return strdup("<builtin>");
         }
     } else {
-        char* fmt = "(lambda %s %s)";
         char* str_formals = lval_repr(env, func->formals);
         char* str_body    = lval_repr(env, func->body);
-
-        size_t size = snprintf(NULL, 0, fmt, str_formals, str_body);
-        char* buffer = xmalloc(size + 1);
-        snprintf(buffer, size + 1, "(lambda %s %s)", str_formals, str_body);
-
+        
+        char* buffer = xsprintf("(lambda %s %s)", str_formals, str_body);
+        
         xfree(str_formals);
         xfree(str_body);
 
@@ -370,6 +347,9 @@ char* lval_str_str(lenv* env, lval* node) {
 }
 
 char* lval_to_str(lenv* env, lval* node) {
+    assert_not_null(env);
+    assert_not_null(node);
+
     switch(node->type) {
         case LVAL_SEXPR: return lval_str_expr(env, node, '(', ')');
         case LVAL_QEXPR: return lval_str_expr(env, node, '{', '}');
@@ -385,6 +365,9 @@ char* lval_to_str(lenv* env, lval* node) {
 }
 
 char* lval_repr(lenv* env, lval* node) {
+    assert_not_null(env);
+    assert_not_null(node);
+
     if (node->type == LVAL_STR) {
         char* escaped = NULL;
         escaped = strdup(node->str);
@@ -403,6 +386,9 @@ char* lval_repr(lenv* env, lval* node) {
 char* lenv_func_name(lenv* env, lbuiltin func);
 
 void lval_print(lenv* env, lval* node) {
+    assert_not_null(env);
+    assert_not_null(node);
+
     char* repr = lval_to_str(env, node);
     printf("%s", repr);
     xfree(repr);
@@ -411,3 +397,11 @@ void lval_print(lenv* env, lval* node) {
 void lval_println(lenv* env, lval* node) {
     lval_print(env, node); putchar('\n');
 }
+
+DEBUG_ONLY(
+    void lval_print_stats(void) {
+        printf("Number of allocated objects:   %d\n", allocated_count);
+        printf("Number of deallocated objects: %d\n", deallocated_count);
+        printf("Number of alive objects:       %d\n", allocated_count - deallocated_count);
+    }
+)

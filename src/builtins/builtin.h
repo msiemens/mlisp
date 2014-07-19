@@ -136,3 +136,8 @@ lval* builtin_put(lenv* env, lval* node);
 lval* builtin_var(lenv* env, lval* node, def_type type);
 
 lval* builtin_lambda(lenv* env, lval* node);
+
+
+DEBUG_ONLY(
+    lval* builtin_debug_stats(lenv* env, lval* node);
+)

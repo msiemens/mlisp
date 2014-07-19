@@ -38,6 +38,10 @@ void builtins_init(lenv* env) {
     builtin_create(env, builtin_lambda, "lambda");
     builtin_create(env, builtin_def, "def");
     builtin_create(env, builtin_put, "=");
+
+    DEBUG_ONLY(
+        builtin_create(env, builtin_debug_stats, "debug_stats");
+    )
 }
 
 void builtin_create(lenv* env, lbuiltin func, char* name) {
@@ -45,5 +49,6 @@ void builtin_create(lenv* env, lbuiltin func, char* name) {
     lval* value = lval_func(func);
 
     lenv_put(env, key, value);
+
     lval_del(key); lval_del(value);
 }

@@ -50,9 +50,45 @@ char* readline(char* prompt) {
 
 #endif
 
+int count_char(char* s, char c) {
+    const char *p = s;
+    int count = 0;
+
+    do {
+        if (*p == c)
+            count++;
+    } while (*(p++));
+
+    return count;
+}
+
+char* read_input() {
+    char* input = readline(">>> ");
+
+    int braces_balanced = 0;
+
+    do {
+        int parens_l = count_char(input, '(');
+        int parens_r = count_char(input, ')');
+        int braces_l = count_char(input, '{');
+        int braces_r = count_char(input, '}');
+
+        braces_balanced = (parens_r == parens_l && braces_r == braces_l);
+        if (!braces_balanced) {
+            // Read next line and append it
+            char* continuation = readline("... ");
+            if (strlen(continuation) == 0) { return input; }
+            input = strappend(input, continuation, strlen(input) + strlen(continuation) + 1);
+            free(continuation);
+        }
+    } while (!braces_balanced);
+
+    return input;
+}
+
 int main(int argc, char** argv) {
     // Initialization
-    mpc_parser_t* Lispy = parser_get();
+    //mpc_parser_t* Lispy = parser_get();
     lenv* env = lenv_new();
     builtins_init(env);
 
@@ -69,11 +105,11 @@ int main(int argc, char** argv) {
         }
     } else {
         // Welcome message
-        puts("MLisp Version 0.0.0.0.2");
+        puts("MLisp Version 0.1");
         puts("Enter 'quit' to exit\n");
 
         while (1) {
-            char* input = readline(">>> ");
+            char* input = read_input();
             add_history(input);
 
             if (strstr(input, "exit") || strstr(input, "quit")) {
@@ -82,22 +118,19 @@ int main(int argc, char** argv) {
                 break;
             }
 
-            // Attempt to parse the user input
-            mpc_result_t r;
-            if (mpc_parse("<stdin>", input, Lispy, &r)) {
-                // On success evaluate the AST, print the result and delete the AST
-                lval* result = eval(env, lval_read(r.output));
+            lval* result = NULL;
+            mpc_err_t parser_error;
+            if (parse("<stdin>", input, env, &result, &parser_error)) {
                 if (!(result->type == LVAL_SEXPR && result->count == 0)) {
                     char* repr = lval_repr(env, result);
                     printf("%s\n", repr);
                     xfree(repr);
                 }
+                
                 lval_del(result);
-                mpc_ast_delete(r.output);
             } else {
-                // Otherwise print and delete the Error
-                mpc_err_print(r.error);
-                mpc_err_delete(r.error);
+                mpc_err_print(&parser_error);
+                mpc_err_delete(&parser_error);
             }
 
             xfree(input);

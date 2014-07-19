@@ -122,3 +122,9 @@ def test_lambda():
 def test_repr():
     with run('repr "a"') as r:
         assert is_string(r, '"a"')
+
+    with run('repr (lambda {x y} {* x y})') as r:
+        assert is_string(r, '(lambda {x y} {* x y})')
+
+    with run('repr ((lambda {x y} {* x y}) 1)') as r:
+        assert is_string(r, '(lambda {y} {* x y})')

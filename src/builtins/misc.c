@@ -9,13 +9,8 @@ lval* builtin_load(lenv* env, lval* node) {
 
     if (mpc_parse_contents(filename, parser_get(), &r)) {
         // Read contents
-        lval* expr = lval_read(r.output);
+        lval* expr = parse_tree(r.output);
         mpc_ast_delete(r.output);
-
-        //if (expr->count && expr->values[0]->type != LVAL_SEXPR) {
-        //    lval_del(expr); lval_del(node);
-        //    return lval_err("%s has no top-level S-Expressions", filename);
-        //}
 
         // Evaluate each expression
         while (expr->count) {
@@ -28,9 +23,7 @@ lval* builtin_load(lenv* env, lval* node) {
             lval_del(result);
         }
 
-        lval_del(expr);
-
-        lval_del(node);
+        lval_del(expr); lval_del(node);
         return lval_sexpr();
     } else {
         char* error_message = mpc_err_string(r.error);
@@ -105,3 +98,13 @@ lval* builtin_eval(lenv* env, lval* node) {
 
     return eval(env, qexpr);
 }
+
+DEBUG_ONLY(
+    lval* builtin_debug_stats(lenv* env, lval* node) {
+        UNUSED(env);
+        lval_print_stats();
+
+        lval_del(node);
+        return lval_sexpr();
+    }
+)
