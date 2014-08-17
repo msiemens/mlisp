@@ -30,7 +30,7 @@ char* strappend(char* dest, char* src, size_t size) {
 }
 
 void xfree(void* ptr) {
-    assertf(ptr != NULL, "attempt to free a NULL ptr!");
+    ASSERTF(ptr != NULL, "attempt to free a NULL ptr!");
     free(ptr);
     ptr = NULL;
 }

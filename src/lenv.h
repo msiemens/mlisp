@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#if defined(MLISP_NOINCLUDE)
+#if defined MLISP_NOINCLUDE
     typedef struct {
         uint32_t n_buckets, size, n_occupied, upper_bound;
         uint32_t* flags;

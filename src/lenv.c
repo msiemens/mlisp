@@ -24,6 +24,7 @@ lenv* lenv_copy(lenv* env) {
     // FIXME: I suspect copying every single variable into the new env makes
     // it very slow (?) to search for a variable because for every single parent
     // we encounter the same variables again...
+    // Do a good profiling on this to verify this hypothesis!
 
     //if (env->parent) {
     hash_each(env->values, {
@@ -47,7 +48,7 @@ lval* lenv_get(lenv* env, lval* name) {
 
 void lenv_put(lenv* env, lval* name, lval* value) {
     hash_set(env->values, strdup(name->sym), lval_copy(value));
-    assertf(hash_has(env->values, name->sym), "insert failed");
+    ASSERTF(hash_has(env->values, name->sym), "insert failed");
 }
 
 void lenv_def(lenv* env, lval* name, lval* value) {

@@ -1,3 +1,7 @@
+/**
+* \file    builtin.h
+* \brief   Contains all builtin functions.
+*/
 #pragma once
 
 #if !defined(MLISP_NOINCLUDE)
@@ -12,16 +16,27 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
+/**
+ * Return an error object.
+ *
+ * Replaces the given node with an error object and returns it.
+ */
 #define LERROR(node, ...) \
     lval* error = lval_err(__VA_ARGS__); \
     lval_del(node); \
     return error;\
 
+/**
+ * Check an assertion, return an error if it fails.
+ */
 #define LASSERT(node, cond, ...) \
     if (!(cond)) { \
         LERROR(node, __VA_ARGS__); \
     } \
 
+/**
+ * Assert that `ecount` arguments has been passed.
+ */
 #define LASSERT_ARG_COUNT(name, node, ecount) \
     if (node->count > ecount) { \
         LERROR(node, "Function '%s' passed too many arguments. Expected %i, got %i.", \
@@ -31,23 +46,35 @@
                name, ecount, node->count); \
     }
 
+/**
+* Assert that at least `ecount` arguments has been passed.
+*/
 #define LASSERT_MIN_ARG_COUNT(name, node, ecount) \
     if (node->count < ecount) { \
         LERROR(node, "Function '%s' passed too few arguments. Expected at least %i, got %i.", \
                name, ecount, node->count); \
     }
 
+/**
+* Assert that at most `ecount` arguments has been passed.
+*/
 #define LASSERT_MAX_ARG_COUNT(name, node, ecount) \
     if (node->count > ecount) { \
         LERROR(node, "Function '%s' passed too many arguments. Expected at most %i, got %i.", \
                name, ecount, node->count); \
     }
 
+/**
+* Assert that the `i`-th argument has the type `etype`.
+*/
 #define LASSERT_ARG_TYPE(name, node, i, etype) \
     LASSERT(node, node->values[i]->type == etype, \
             "Function '%s' passed incorrect argument types. Expected %s, got %s.", \
             name, lval_str_type(etype), lval_str_type(node->values[i]->type));
 
+/**
+* Assert that the `i`-th argument is not an empty list.
+*/
 #define LASSERT_ARG_NOT_EMPTY_LIST(name, node, i) \
     LASSERT(node, node->values[i]->count > 0, \
             "Function '%s' passed empty list.", name);
@@ -55,32 +82,103 @@
 #pragma GCC diagnostic pop
 
 
-typedef enum def_type { DEF_LOCAL, DEF_GLOBAL } def_type;
+/// Possible definition scopes.
+typedef enum def_scope {DEF_LOCAL, DEF_GLOBAL} def_scope;
 
-
-bool is_builtin(char* name);
-
+/**
+ * Add all builtin functions to the environment.
+ *
+ * \param env   The environment to initialize.
+ */
 void builtins_init(lenv* env);
 
+/**
+ * Create a builtin function in an environment.
+ *  
+ * Note that any builtin has to transform the given arguments completely
+ * or return it. Otherwise memory leaking will occur!
+ *
+ * \param env   The environment where to add the newly created builtin.
+ * \param func  The C function to call.
+ * \param name  The name of the function.
+ */
 void builtin_create(lenv* env, lbuiltin func, char* name);
 
 
+/**
+ * Load and execute an external mlisp file.
+ * 
+ * The loaded file will be executed in the current environment.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The filename.
+ *
+ * \returns None on success or an error.
+ */
 lval* builtin_load(lenv* env, lval* node);
 
+/**
+ * Print an object followed by a newline.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The object to print.
+ *
+ * \returns None
+ */
 lval* builtin_println(lenv* env, lval* node);
 
+/**
+ * Print an object.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The the object to print.
+ *
+ * \returns None
+ */
 lval* builtin_print(lenv* env, lval* node);
 
-lval* builtin_display(lenv* env, lval* node, int newline);
-
+/**
+ * Return the string representation of an object.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The object to get the repr of.
+ *
+ * \returns The string object.
+ */
 lval* builtin_repr(lenv* env, lval* node);
 
+/**
+ * Return an error with a given error message.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The error message.
+ *
+ * \returns The string object.
+ */
 lval* builtin_error(lenv* env, lval* node);
 
+/**
+ * Evaluate a list as an expression
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The list to evaluate.
+ *
+ * \returns The result of the evaluation.
+ */
 lval* builtin_eval(lenv* env, lval* node);
 
+// -------------------- DOC MARKER --------------------
 
+/**
+* SHORT_DESCR
+*
+* \param env   The environment where to run this function.
+* \param node  The arguments.
+*
+* \returns RETURN_VALUE
+*/
 lval* builtin_add(lenv* env, lval* node);
+
 
 lval* builtin_sub(lenv* env, lval* node);
 
@@ -133,11 +231,11 @@ lval* builtin_def(lenv* env, lval* node);
 
 lval* builtin_put(lenv* env, lval* node);
 
-lval* builtin_var(lenv* env, lval* node, def_type type);
+lval* builtin_var(lenv* env, lval* node, def_scope type);
 
 lval* builtin_lambda(lenv* env, lval* node);
 
 
-DEBUG_ONLY(
+#if defined DEBUG
     lval* builtin_debug_stats(lenv* env, lval* node);
-)
+#endif

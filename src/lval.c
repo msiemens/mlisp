@@ -5,14 +5,16 @@
 /// Wether a node is a list-like object.
 #define is_list_like(node) (node->type == LVAL_SEXPR || node->type == LVAL_QEXPR)
 
-#if defined(DEBUG)
+#if defined DEBUG
     static long allocated_count = 0;
     static long deallocated_count = 0;
 #endif
 
 
 lval* lval_new(void) {
-    DEBUG_ONLY(allocated_count += 1);
+#if defined DEBUG
+    allocated_count += 1;
+#endif
     return xmalloc(LVAL_SIZE);
 }
 
@@ -35,7 +37,7 @@ lval* lval_qexpr(void) {
 }
 
 lval* lval_sym(char* symbol) {
-    assert_not_null(symbol);
+    ASSERT_NOT_NULL(symbol);
 
     lval* node = lval_new();
     node->type = LVAL_SYM;
@@ -53,7 +55,7 @@ lval* lval_num(PRECISION_FLOAT value) {
 }
 
 lval* lval_str(char* str) {
-    assert_not_null(str);
+    ASSERT_NOT_NULL(str);
 
     lval* node = lval_new();
     node->type = LVAL_STR;
@@ -63,7 +65,7 @@ lval* lval_str(char* str) {
 }
 
 lval* lval_err(char* fmt, ...) {
-    assert_not_null(fmt);
+    ASSERT_NOT_NULL(fmt);
 
     lval* node = lval_new();
     node->type = LVAL_ERR;
@@ -89,8 +91,8 @@ lval* lval_func(lbuiltin func) {
 }
 
 lval* lval_lambda(lval* formals, lval* body) {
-    assert_not_null(formals);
-    assert_not_null(body);
+    ASSERT_NOT_NULL(formals);
+    ASSERT_NOT_NULL(body);
 
     lval* node = lval_new();
     node->type = LVAL_FUNC;
@@ -104,9 +106,11 @@ lval* lval_lambda(lval* formals, lval* body) {
 }
 
 void lval_del(lval* node) {
-    assert_not_null(node);
+    ASSERT_NOT_NULL(node);
 
-    DEBUG_ONLY(deallocated_count += 1);
+#if defined DEBUG
+    deallocated_count += 1;
+#endif
 
     switch(node->type) {
         case LVAL_NUM: break;
@@ -136,14 +140,14 @@ void lval_del(lval* node) {
             }
             break;
         default:
-            assertf(0, "Invalid lval type: %i", node->type);
+            ASSERTF(0, "Invalid lval type: %i", node->type);
     }
 
     xfree(node);
 }
 
 lval* lval_copy(lval* node) {
-    assert_not_null(node);
+    ASSERT_NOT_NULL(node);
 
     lval* copy = lval_new();
     copy->type = node->type;
@@ -180,15 +184,15 @@ lval* lval_copy(lval* node) {
             }
             break;
         default:
-            assertf(0, "Invalid lval type: %i", node->type);
+            ASSERTF(0, "Invalid lval type: %i", node->type);
     }
 
     return copy;
 }
 
 bool lval_eq(lval* x, lval* y) {
-    assert_not_null(x);
-    assert_not_null(y);
+    ASSERT_NOT_NULL(x);
+    ASSERT_NOT_NULL(y);
 
     if (x->type != y->type) {
         return false;
@@ -226,7 +230,7 @@ bool lval_eq(lval* x, lval* y) {
 }
 
 lval* lval_add(lval* container, lval* value) {
-    assert_list_like(container);
+    ASSERT_LIST_LIKE(container);
 
     container->count++;
     container->values = xrealloc(container->values,
@@ -237,8 +241,8 @@ lval* lval_add(lval* container, lval* value) {
 }
 
 lval* lval_join(lval* first, lval* second) {
-    assert_list_like(first);
-    assert_list_like(second);
+    ASSERT_LIST_LIKE(first);
+    ASSERT_LIST_LIKE(second);
 
     // For each value in 'second', add it to 'first'
     while (second->count) {
@@ -250,10 +254,10 @@ lval* lval_join(lval* first, lval* second) {
 }
 
 lval* lval_pop(lval* container, int index) {
-    assert_list_like(container);
-    assert_arg(container, container->count > 0, "count is %i (<= 0)", container->count);
-    assert_arg(index, index >= 0, "is %i (< 0)", index);
-    assert_arg(index, index <= container->count, "is %i (< container->count = %i)", index, container->count);
+    ASSERT_LIST_LIKE(container);
+    ASSERT_ARG(container, container->count > 0, "count is %i (<= 0)", container->count);
+    ASSERT_ARG(index, index >= 0, "is %i (< 0)", index);
+    ASSERT_ARG(index, index <= container->count, "is %i (< container->count = %i)", index, container->count);
 
     lval* item = container->values[index];
 
@@ -347,8 +351,8 @@ char* lval_str_str(lenv* env, lval* node) {
 }
 
 char* lval_to_str(lenv* env, lval* node) {
-    assert_not_null(env);
-    assert_not_null(node);
+    ASSERT_NOT_NULL(env);
+    ASSERT_NOT_NULL(node);
 
     switch(node->type) {
         case LVAL_SEXPR: return lval_str_expr(env, node, '(', ')');
@@ -358,15 +362,15 @@ char* lval_to_str(lenv* env, lval* node) {
         case LVAL_SYM:   return xsprintf("%s", node->sym);
         case LVAL_NUM:   return xsprintf("%g", node->num);
         case LVAL_ERR:   return xsprintf("Error: %s", node->err);
-        default:         assertf(0, "Encountered invalid lval type: %i", node->type);
+        default:         ASSERTF(0, "Encountered invalid lval type: %i", node->type);
     }
 
     return NULL;
 }
 
 char* lval_repr(lenv* env, lval* node) {
-    assert_not_null(env);
-    assert_not_null(node);
+    ASSERT_NOT_NULL(env);
+    ASSERT_NOT_NULL(node);
 
     if (node->type == LVAL_STR) {
         char* escaped = NULL;
@@ -386,8 +390,8 @@ char* lval_repr(lenv* env, lval* node) {
 char* lenv_func_name(lenv* env, lbuiltin func);
 
 void lval_print(lenv* env, lval* node) {
-    assert_not_null(env);
-    assert_not_null(node);
+    ASSERT_NOT_NULL(env);
+    ASSERT_NOT_NULL(node);
 
     char* repr = lval_to_str(env, node);
     printf("%s", repr);
@@ -398,10 +402,10 @@ void lval_println(lenv* env, lval* node) {
     lval_print(env, node); putchar('\n');
 }
 
-DEBUG_ONLY(
+#if defined DEBUG
     void lval_print_stats(void) {
         printf("Number of allocated objects:   %d\n", allocated_count);
         printf("Number of deallocated objects: %d\n", deallocated_count);
         printf("Number of alive objects:       %d\n", allocated_count - deallocated_count);
     }
-)
+#endif

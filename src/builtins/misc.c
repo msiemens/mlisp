@@ -45,10 +45,7 @@ lval* builtin_load(lenv* env, lval* node) {
     }
 }
 
-lval* builtin_println(lenv* env, lval* node) { return builtin_display(env, node, 1); }
-lval* builtin_print(lenv* env, lval* node)   { return builtin_display(env, node, 0); }
-
-lval* builtin_display(lenv* env, lval* node, int newline) {
+lval* builtin_display(lenv* env, lval* node, bool newline) {
     for (int i = 0; i < node->count; i++) {
         char* str = lval_to_str(env, node->values[i]);
         printf(str);
@@ -66,6 +63,9 @@ lval* builtin_display(lenv* env, lval* node, int newline) {
     lval_del(node);
     return lval_sexpr();
 }
+
+lval* builtin_println(lenv* env, lval* node) { return builtin_display(env, node, 1); }
+lval* builtin_print  (lenv* env, lval* node) { return builtin_display(env, node, 0); }
 
 lval* builtin_repr(lenv* env, lval* node) {
     LASSERT_ARG_COUNT("repr", node, 1);
@@ -99,7 +99,7 @@ lval* builtin_eval(lenv* env, lval* node) {
     return eval(env, qexpr);
 }
 
-DEBUG_ONLY(
+#if defined DEBUG
     lval* builtin_debug_stats(lenv* env, lval* node) {
         UNUSED(env);
         lval_print_stats();
@@ -107,4 +107,4 @@ DEBUG_ONLY(
         lval_del(node);
         return lval_sexpr();
     }
-)
+#endif

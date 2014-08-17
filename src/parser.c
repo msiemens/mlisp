@@ -46,7 +46,7 @@ void parser_cleanup() {
 }
 
 lval* parse_tree(mpc_ast_t* tree) {
-    assert_not_null(tree);
+    // assert_not_null(tree);  // FIXME: Comment in
 
     if (strstr(tree->tag, "number")) {
         return parse_num(tree);
@@ -65,7 +65,7 @@ lval* parse_tree(mpc_ast_t* tree) {
     } else if (strstr(tree->tag, "qexpr")) {
         expr = lval_qexpr();
     } else {
-        assertf(0, "Unkown tag containing elements");
+        ASSERTF(0, "Unkown tag containing elements");
     }
 
     // Fill this list with any valid expression contained within

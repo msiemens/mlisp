@@ -23,7 +23,7 @@
   *
   * \param env	The environment in which to evaluate the node.
   * \param node	The node to evaluate.
-  * 
+  *
   * \returns A #lval containing the result.
   */
   lval* eval_sexpr(lenv* env, lval* node);
@@ -36,10 +36,12 @@
  * return a new function with the given arguments bound to the lambda context
  * (partial evaluation). Otherwise, evaluate the lambda and return the result.
  *
+ * \todo Improve this code
+ *
  * \param env	The environment in which to evaluate the function.
  * \param func	The function to call.
  * \param args	A list of arguments for the function.
- * 
+ *
  * \returns A #lval containing the result.
  */
  lval* eval_func(lenv* env, lval* func, lval* args);
@@ -53,7 +55,7 @@
  *
  * \param env	The environment in which to evaluate the node.
  * \param node	The node to evaluate.
- * 
+ *
  * \returns A #lval containing the result.
  */
  lval* eval(lenv* env, lval* node);

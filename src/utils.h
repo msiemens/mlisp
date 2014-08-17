@@ -16,16 +16,11 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 
 /// Tell GNU-compilers to allow non-ANSI extensions. Otherwise: no effect.
-#if (!defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER))
+#if !defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
     #define __extension__(arg) arg
 #endif
 
-#if defined(NDEBUG)
-    #define DEBUG_ONLY(x)
-#else
-    /// Code to run only when DEBUG
-    #define DEBUG_ONLY(x) x
-    
+#if ! defined NDEBUG
     /// DEBUG flag
     #define DEBUG 1
 #endif
@@ -44,7 +39,7 @@
  * \param msg   The message to print.
  * \param ...   Additional `printf`-like arguments.
  */
-#define log_error(msg, ...) __extension__({ \
+#define LOG_ERROR(msg, ...) __extension__({ \
     fprintf(stderr, "[ERROR] (%s:%d): " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
 })
 
@@ -57,9 +52,9 @@
      * \param ...   First argument: the message to print. Then: Additional
      *                  `printf`-like arguments.
      */
-    #define assertf(cond, ...) __extension__({ \
+    #define ASSERTF(cond, ...) __extension__({ \
         if(!(cond)) { \
-            log_error(__VA_ARGS__); \
+            LOG_ERROR(__VA_ARGS__); \
             assert(cond); \
         } \
     })
@@ -78,8 +73,8 @@
      * \param msg   An additional error message.
      * \param ...   Additional `printf`-like arguments.
      */
-    #define assert_arg(name, test, msg, ...) __extension__({\
-        assertf(test, "'%s':%s " msg, __PRETTY_FUNCTION__, #name, __VA_ARGS__)\
+    #define ASSERT_ARG(name, test, msg, ...) __extension__({\
+        ASSERTF(test, "'%s':%s " msg, __PRETTY_FUNCTION__, #name, __VA_ARGS__)\
     })
 
     /**
@@ -89,8 +84,8 @@
      *
      * \param name  The name of the argument to check.
      */
-    #define assert_list_like(name)\
-        assert_arg(name, is_list_like(name),\
+    #define ASSERT_LIST_LIKE(name)\
+        ASSERT_ARG(name, is_list_like(name),\
                    "is of type %s which is not list-like a container",\
                    lval_str_type(name->type))
 
@@ -99,14 +94,14 @@
      *
      * \param name  The name of the argument to check.
      */
-    #define assert_not_null(name)\
-        assert_arg(name, name != NULL,\
+    #define ASSERT_NOT_NULL(name)\
+        ASSERT_ARG(name, name != NULL,\
                    "is a NULL pointer%s", "");
 #else
-    #define assertf(...)
-    #define assert_arg(...)
-    #define assert_list_like_like(...)
-    #define assert_not_null(...)
+    #define ASSERTF(...)
+    #define ASSERT_ARG(...)
+    #define ASSERT_LIST_LIKE(...)
+    #define ASSERT_NOT_NULL(...)
 #endif
 
 #pragma GCC diagnostic pop

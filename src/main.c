@@ -88,7 +88,6 @@ char* read_input() {
 
 int main(int argc, char** argv) {
     // Initialization
-    //mpc_parser_t* Lispy = parser_get();
     lenv* env = lenv_new();
     builtins_init(env);
 

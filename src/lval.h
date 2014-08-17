@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 
-#if !defined(MLISP_NOINCLUDE)
+#if !defined MLISP_NOINCLUDE
     #include "mpc.h"
 #endif
 
@@ -368,7 +368,7 @@ void lval_print(lenv* env, lval* node);
 */
 void lval_println(lenv* env, lval* node);
 
-#if defined(DEBUG)
+#if defined DEBUG
     /**
      * Print some internal statistics.
      */

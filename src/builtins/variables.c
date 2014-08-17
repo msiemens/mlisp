@@ -3,7 +3,7 @@
 lval* builtin_def(lenv* env, lval* node) { return builtin_var(env, node, DEF_GLOBAL); }
 lval* builtin_put(lenv* env, lval* node) { return builtin_var(env, node, DEF_LOCAL); }
 
-lval* builtin_var(lenv* env, lval* node, def_type type) {
+lval* builtin_var(lenv* env, lval* node, def_scope type) {
     LASSERT_ARG_TYPE((type == DEF_GLOBAL) ? "def" : "=", node, 0, LVAL_QEXPR);
 
     lval* symbols = node->values[0];
@@ -14,8 +14,6 @@ lval* builtin_var(lenv* env, lval* node, def_type type) {
         LASSERT(node, (symbols->values[i]->type == LVAL_SYM),
                "Function \"def\" cannot define non-symbol. Expected %s, got %s.",
                lval_str_type(LVAL_SYM), lval_str_type(symbols->values[i]->type));
-        //LASSERT(node, !is_builtin(symbols->values[i]->sym),
-        //        "Cannot redefine builtin '%s'.", symbols->values[i]->sym);
     }
 
     // Check for correct number of symbols and values
@@ -29,7 +27,7 @@ lval* builtin_var(lenv* env, lval* node, def_type type) {
                 break;
             case DEF_GLOBAL: lenv_def(env, symbols->values[i], node->values[i + 1]);
                 break;
-            default: assertf(0, "Invalid def_type passed: %i", type);
+            default: ASSERTF(0, "Invalid def_type passed: %i", type);
         }
     }
 

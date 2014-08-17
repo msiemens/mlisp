@@ -39,7 +39,6 @@ lval* eval_sexpr(lenv* env, lval* node) {
     return result;
 }
 
-// TODO: Improve this code!
 lval* eval_func(lenv* env, lval* func, lval* args) {
     if (func->builtin) {
         return func->builtin(env, args);

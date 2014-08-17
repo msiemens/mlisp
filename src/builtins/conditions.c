@@ -24,7 +24,7 @@ lval* builtin_ord(lenv* env, lval* node, char* op) {
 
         if      (strncmp(op, ">",  2) == 0) { result &= (x->num >  y->num); }
         else if (strncmp(op, ">=", 2) == 0) { result &= (x->num >= y->num); }
-        else if (strncmp(op, "<",  2) == 0) { result &= (x->num < y->num); }
+        else if (strncmp(op, "<",  2) == 0) { result &= (x->num <  y->num); }
         else if (strncmp(op, "<=", 2) == 0) { result &= (x->num <= y->num); }
 
         x->num = y->num;
@@ -53,7 +53,7 @@ lval* builtin_cmp(lenv* env, lval* node, char* op) {
 
     if      (strcmp(op, "==") == 0) { result =  lval_eq(o1, o2); }
     else if (strcmp(op, "!=") == 0) { result = !lval_eq(o1, o2); }
-    else    { assertf(0, "Invalid op in builtin_cmp: %s", op); }
+    else                            { ASSERTF(0, "Invalid op in builtin_cmp: %s", op); }
 
     lval_del(node);
     return lval_num(result);
