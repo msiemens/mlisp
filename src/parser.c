@@ -114,7 +114,7 @@ lval* parse_str(char* contents) {
     return node;
 }
 
-bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t* parser_error) {
+bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t** parser_error) {
     mpc_result_t r;
     if (mpc_parse(filename, str, parser_get(), &r)) {
         *result = eval(env, parse_tree(r.output));
@@ -122,8 +122,8 @@ bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t* parse
 
         return true;
     } else {
-        parser_error = r.error;
-        
+        *parser_error = r.error;
+
         return false;
     }
 }

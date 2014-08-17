@@ -119,18 +119,20 @@ int main(int argc, char** argv) {
             }
 
             lval* result = NULL;
-            mpc_err_t parser_error;
+            mpc_err_t* parser_error;
+            memset(&parser_error, 0, sizeof(parser_error));
+
             if (parse("<stdin>", input, env, &result, &parser_error)) {
                 if (!(result->type == LVAL_SEXPR && result->count == 0)) {
                     char* repr = lval_repr(env, result);
                     printf("%s\n", repr);
                     xfree(repr);
                 }
-                
+
                 lval_del(result);
             } else {
-                mpc_err_print(&parser_error);
-                mpc_err_delete(&parser_error);
+                mpc_err_print(parser_error);
+                mpc_err_delete(parser_error);
             }
 
             xfree(input);

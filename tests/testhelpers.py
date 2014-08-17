@@ -119,18 +119,18 @@ def reset_env():
 
 @contextmanager
 def run(line):
-    result = ffi.new('lval * *')  # Cannot use ffi.addressof, therefore
-                                    # create the indirection and dereference
-                                    # later.
-    parser_error = ffi.new('mpc_err_t *')
+    # Cannot use ffi.addressof, therefore create the indirection and
+    # dereference later
+    result = ffi.new('lval * *')
+    parser_error = ffi.new('mpc_err_t * *')
 
     if lib.parse('<python>', line, env, result, parser_error):
         yield lval(result[0])  # <-- dereference of p_result
     else:
         try:
-            raise ParserError(ffi.string(lib.mpc_err_string(p_parser_error)))
+            raise ParserError(ffi.string(lib.mpc_err_string(parser_error[0])))
         finally:
-            lib.mpc_err_delete(p_parser_error)
+            lib.mpc_err_delete(parser_error[0])
 
 
 def run_single(line):

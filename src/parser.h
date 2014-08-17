@@ -17,7 +17,7 @@
 
 /**
  * Get the parser object.
- * 
+ *
  * \returns A pointer to the parser object.
  */
 mpc_parser_t* parser_get();
@@ -27,7 +27,7 @@ mpc_parser_t* parser_get();
  */
 void parser_cleanup();
 
-bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t* parser_error);
+bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t** parser_error);
 
 lval* parse_tree(mpc_ast_t* tree);
 
