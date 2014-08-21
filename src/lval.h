@@ -48,7 +48,7 @@ struct lval {
 
         /// Values for S-Expr/Q-Expr
         struct {
-            int count;              ///< The number of values.
+            size_t count;           ///< The number of values.
             struct lval** values;   ///< The values (pointer to pointers).
         };
 
@@ -260,7 +260,7 @@ lval* lval_join(lval* first, lval* second);
  *
  * \returns The value at `container[index]`.
  */
-lval* lval_pop(lval* container, int index);
+lval* lval_pop(lval* container, size_t index);
 
 /**
  * Return an element from a list and remove the rest of the list.
@@ -277,7 +277,7 @@ lval* lval_pop(lval* container, int index);
  *
  * \returns The value at `container[index]`.
  */
-lval* lval_take(lval* container, int index);
+lval* lval_take(lval* container, size_t index);
 
 
 // ------------------------------------------------------------------------------

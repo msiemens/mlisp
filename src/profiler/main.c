@@ -17,6 +17,7 @@ void _parse(char* input) {
 }
 
 void init(void) {
+    parser_init();
     lispy = parser_get();
     env = lenv_new();
     builtins_init(env);

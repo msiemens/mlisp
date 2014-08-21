@@ -28,6 +28,12 @@ def test_float():
     with run('* 0.1 10') as r:
         assert is_number(r, 1)
 
+    with run('== 0.1 0.1') as r:
+        assert is_number(r, 1)
+
+    with run('== 0.1 0.0999') as r:
+        assert is_number(r, 0)
+
 
 def test_errors():
     with run('/ 10 0') as r:

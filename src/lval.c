@@ -73,9 +73,9 @@ lval* lval_err(char* fmt, ...) {
     va_list va;
     va_start(va, fmt);
 
-    size_t required_size = vsnprintf(NULL, 0, fmt, va);
+    size_t required_size = xvsnprintf(NULL, 0, fmt, va);
     node->err = xmalloc(required_size + 1);
-    vsnprintf(node->err, required_size + 1, fmt, va);
+    xvsnprintf(node->err, required_size + 1, fmt, va);
 
     va_end(va);
 
@@ -130,9 +130,9 @@ void lval_del(lval* node) {
         // Sexpr: Delete all elements inside
         case LVAL_SEXPR:
         case LVAL_QEXPR:
-            for (int i = 0; i < node->count; i++) {
-                lval_del(node->values[i]);
-            }
+            for_item(node, {
+                lval_del(item);
+            })
 
             // Free memory allocated to contain the pointers
             if (node->values) {
@@ -179,9 +179,9 @@ lval* lval_copy(lval* node) {
             copy->count  = node->count;
             copy->values = xmalloc(LVAL_PTR_SIZE * node->count);
 
-            for (int i = 0; i < node->count; i++) {
-                copy->values[i] = lval_copy(node->values[i]);
-            }
+            for_item(node, {
+                copy->values[i] = lval_copy(item);
+            })
             break;
         default:
             ASSERTF(0, "Invalid lval type: %i", node->type);
@@ -199,7 +199,7 @@ bool lval_eq(lval* x, lval* y) {
     }
 
     switch (x->type) {
-        case LVAL_NUM: return (x->num == y->num);
+        case LVAL_NUM: return fcmp(x->num, y->num);
 
         case LVAL_ERR: return (strcmp(x->err, y->err) == false);
         case LVAL_SYM: return (strcmp(x->sym, y->sym) == false);
@@ -217,11 +217,11 @@ bool lval_eq(lval* x, lval* y) {
             if (x->count != y->count) {
                 return false;
             }
-            for (int i = 0; i < x->count; i++) {
+            for_item(x, {
                 if (!lval_eq(x->values[i], y->values[i])) {
                     return false;
                 }
-            }
+            });
 
             return true;
     }
@@ -253,10 +253,9 @@ lval* lval_join(lval* first, lval* second) {
     return first;
 }
 
-lval* lval_pop(lval* container, int index) {
+lval* lval_pop(lval* container, size_t index) {
     ASSERT_LIST_LIKE(container);
     ASSERT_ARG(container, container->count > 0, "count is %i (<= 0)", container->count);
-    ASSERT_ARG(index, index >= 0, "is %i (< 0)", index);
     ASSERT_ARG(index, index <= container->count, "is %i (< container->count = %i)", index, container->count);
 
     lval* item = container->values[index];
@@ -273,7 +272,7 @@ lval* lval_pop(lval* container, int index) {
     return item;
 }
 
-lval* lval_take(lval* container, int index) {
+lval* lval_take(lval* container, size_t index) {
     lval* item = lval_pop(container, index);
     lval_del(container);
 
@@ -301,8 +300,8 @@ char* lval_str_expr(lenv* env, lval* node, char open, char close) {
 
     buffer[0] = open;
 
-    for (int i = 0; i < node->count; i++) {
-        char* tmp = lval_repr(env, node->values[i]);
+    for_item(node, {
+        char* tmp = lval_repr(env, item);
         unsigned int tmp_len = strlen(tmp);
 
         buffer_length += tmp_len;
@@ -314,7 +313,7 @@ char* lval_str_expr(lenv* env, lval* node, char open, char close) {
             buffer_length += 1;
             buffer = strappend(buffer, " ", buffer_length);
         }
-    }
+    });
 
     buffer_length += 1;
     buffer = xrealloc(buffer, buffer_length);

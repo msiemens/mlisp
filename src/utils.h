@@ -4,11 +4,13 @@
  */
 #pragma once
 
-#if !defined(MLISP_NOINCLUDE)
-    #include <stdlib.h>
-    #include <stdio.h>
-    #include <string.h>
-    #include <assert.h>
+#if ! defined MLISP_NOINCLUDE
+#include <assert.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #endif
 
 
@@ -17,12 +19,12 @@
 
 /// Tell GNU-compilers to allow non-ANSI extensions. Otherwise: no effect.
 #if !defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
-    #define __extension__(arg) arg
+#define __extension__(arg) arg
 #endif
 
 #if ! defined NDEBUG
-    /// DEBUG flag
-    #define DEBUG 1
+/// DEBUG flag
+#define DEBUG 1
 #endif
 
 /// Prevent compiler from complaining about unused arguments
@@ -40,6 +42,14 @@
  * \param msg   The message to print.
  * \param ...   Additional `printf`-like arguments.
  */
+#define for_item(node, block) { \
+    for (size_t i = 0; i < node->count; i++) { \
+        lval* item = node->values[i]; \
+        UNUSED(item); \
+        block; \
+    } \
+}
+
 #define LOG_ERROR(msg, ...) __extension__({ \
     fprintf(stderr, "[ERROR] (%s:%d): " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
 })
@@ -108,6 +118,9 @@
 #pragma GCC diagnostic pop
 
 
+// TODO: Docs
+bool fcmp(double f1, double f2);
+
 /**
  * Duplicate a string.
  *
@@ -119,6 +132,24 @@
  * \returns A pointer to the new string.
  */
 char* strdup(const char * s);
+
+/**
+* Append a string to another string.
+*
+* Copy a string to the end of another string. Needs the new total length.
+*
+* \param [in,out]  dest	Where to append the string to.
+* \param [in]      src	The string to append.
+* \param           size	The size of the new string.
+*
+* \returns A char pointer to `dest` (**might be moved!**)
+*/
+char* strappend(char* dest, char* src, size_t size);
+
+// TODO: Docs
+#if ! defined MLISP_NOINCLUDE
+    size_t xvsnprintf(char* s, size_t n, const char* format, va_list arg);
+#endif
 
 /**
  * A safe sprintf.
@@ -134,27 +165,14 @@ char* strdup(const char * s);
  char* xsprintf(const char* fmt, ...);
 
 /**
- * Append a string to another string.
- *
- * Copy a string to the end of another string. Needs the new total length.
- *
- * \param [in,out]  dest	Where to append the string to.
- * \param [in]      src	The string to append.
- * \param           size	The size of the new string.
- *
- * \returns A char pointer to `dest` (**might be moved!**)
- */
-char* strappend(char* dest, char* src, size_t size);
-
-/**
  * Free a pointer safely
  *
  * Free a pointer while checking for double free and preventing use after free
  * by setting the pointer to NULL.
  *
- * \param ptr	The pointer to free.
+ * \param ptr	A pointer to the pointer to free.
  */
-void xfree(void* ptr);
+void xfree(void** ptr);
 
 /**
  * Allocate memory safely.

@@ -12,9 +12,9 @@ lval* builtin_op(lenv* env, lval* node, char op) {
     char name[2]; name[0] = op; name[1] = '\0';
 
     // Ensure all arguments are numbers
-    for (int i = 0; i < node->count; i++) {
+    for_item(node, {
         LASSERT_ARG_TYPE(name, node, i, LVAL_NUM);
-    }
+    });
 
     lval* x = lval_pop(node, 0);
 
@@ -30,14 +30,14 @@ lval* builtin_op(lenv* env, lval* node, char op) {
         else if (op == '-') { x->num -= y->num; }
         else if (op == '*') { x->num *= y->num; }
         else if (op == '/' || op == '%') {
-            if (y->num == 0) {
+            if (fcmp(y->num, 0)) {
                 lval_del(x); lval_del(y);
                 x = lval_err("Division by zero");
                 break;
             }
 
             switch (op) {
-                case '%': x->num = fmodf(x->num, y->num); break;
+                case '%': x->num = fmod(x->num, y->num); break;
                 case '/': x->num /= y->num; break;
             }
         }

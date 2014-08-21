@@ -12,9 +12,9 @@ lval* builtin_ord(lenv* env, lval* node, char* op) {
     LASSERT_MIN_ARG_COUNT(op, node, 2);
 
     // Ensure all arguments are numbers
-    for (int i = 0; i < node->count; i++) {
+    for_item(node, {
         LASSERT_ARG_TYPE(op, node, i, LVAL_NUM);
-    }
+    });
 
     lval* x = lval_pop(node, 0);
     PRECISION_INT result = 1;

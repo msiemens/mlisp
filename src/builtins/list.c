@@ -40,9 +40,9 @@ lval* builtin_list(lenv* env, lval* node) {
 lval* builtin_join(lenv* env, lval* node) {
     UNUSED(env);
 
-    for (int i = 0; i < node->count; i++) {
+    for_item(node, {
         LASSERT_ARG_TYPE("join", node, i, LVAL_QEXPR);
-    }
+    });
 
     lval* qexpr = lval_pop(node, 0);
     while (node->count) {

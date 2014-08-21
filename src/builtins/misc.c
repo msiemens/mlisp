@@ -46,15 +46,15 @@ lval* builtin_load(lenv* env, lval* node) {
 }
 
 lval* builtin_display(lenv* env, lval* node, bool newline) {
-    for (int i = 0; i < node->count; i++) {
-        char* str = lval_to_str(env, node->values[i]);
+    for_item(node, {
+        char* str = lval_to_str(env, item);
         printf(str);
         xfree(str);
 
         if (i != node->count - 1) {
             putchar(' ');
         }
-    }
+    });
 
     if (newline) {
         putchar('\n');

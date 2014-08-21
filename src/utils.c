@@ -1,7 +1,12 @@
-#include <stdarg.h>
+#include <float.h>
+#include <math.h>
 
 #include "utils.h"
 
+
+bool fcmp(double f1, double f2) {
+    return fabs(f1 - f2) < DBL_EPSILON;
+}
 
 char* strdup(const char * s) {
     size_t len = strlen(s) + 1;
@@ -10,29 +15,38 @@ char* strdup(const char * s) {
     return p ? memcpy(p, s, len) : NULL;
 }
 
-char* xsprintf(const char* fmt, ...) {
-    va_list va;
-    va_start(va, fmt);
-
-    size_t required_size = vsnprintf(NULL, 0, fmt, va);
-    char* buffer = xmalloc(required_size + 1);
-    vsnprintf(buffer, required_size + 1, fmt, va);
-
-    va_end(va);
-
-    return buffer;
-}
-
 char* strappend(char* dest, char* src, size_t size) {
     dest = xrealloc(dest, size);
     strcat(dest, src);
     return dest;
 }
 
+size_t xvsnprintf(char* s, size_t n, const char* format, va_list arg) {
+    int written = vsnprintf(s, n, format, arg);
+    if (written < 0) {
+        ASSERTF(written > 0, "problems encoding fmt '%s'", format);
+        return 0;  // Will never reach
+    } else {
+        return (size_t) written;
+    }
+}
+
+char* xsprintf(const char* fmt, ...) {
+    va_list va;
+    va_start(va, fmt);
+
+    size_t required_size = xvsnprintf(NULL, 0, fmt, va);
+    char* buffer = xmalloc(required_size + 1);
+    xvsnprintf(buffer, required_size + 1, fmt, va);
+
+    va_end(va);
+
+    return buffer;
+}
+
 void xfree(void* ptr) {
     ASSERTF(ptr != NULL, "attempt to free a NULL ptr!");
     free(ptr);
-    ptr = NULL;
 }
 
 void* xmalloc(size_t n) {

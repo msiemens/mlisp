@@ -7,14 +7,14 @@
 
 lval* eval_sexpr(lenv* env, lval* node) {
     // Evaluate children
-    for (int i = 0; i < node->count; i++) {
+    for_item(node, {
         node->values[i] = eval(env, node->values[i]);
 
         // Error checking
         if (node->values[i]->type == LVAL_ERR) {
             return lval_take(node, i);
         }
-    }
+    });
 
     // Empty expression
     if (node->count == 0) { return node; }
@@ -47,8 +47,8 @@ lval* eval_func(lenv* env, lval* func, lval* args) {
     lval* formals = func->formals;
 
     // Record argument count
-    int given = args->count;
-    int total = formals->count;
+    size_t given = args->count;
+    size_t total = formals->count;
 
     while (args->count) {
         // If we ran out of formal arguments to bind
