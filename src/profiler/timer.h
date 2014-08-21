@@ -2,7 +2,7 @@
  * \file    timer.h
  * \brief   A pretty precise timer.
  */
- 
+
 #if defined(_WIN32)
     #include <windows.h>
 #else
@@ -18,8 +18,8 @@ typedef struct timer_inst {
     LARGE_INTEGER start_count;  ///< Number of cpu ticks at start of measuring
     LARGE_INTEGER end_count;    ///< Number of cpu ticks at end of measuring
 #else
-    timespec start_count;       ///< The time at start of measuring
-    timespec end_count;         ///< The time at end of measuring
+    struct timeval start_count;       ///< The time at start of measuring
+    struct timeval end_count;         ///< The time at end of measuring
 #endif
 } timer_inst;
 

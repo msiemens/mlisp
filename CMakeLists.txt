@@ -73,18 +73,25 @@ endif(NOT WIN32)
 
 # Setting compiler flags
 #################################################################################
+set(DEBUG "false" CACHE BOOL "Compile with debug information")
+
 set(CUSTOM_FLAGS "-std=c11")
 set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -pedantic -Wextra -Wall")
-set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wuninitialized -Wmissing-declarations -Winit-self")
-set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wstrict-aliasing")
-set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -fstrict-aliasing")
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wuninitialized -Winit-self -Waggregate-return -Wconversion -Wswitch-enum -Wformat -Wfloat-equal -Wconversion -Wshadow -Wunreachable-code")
+set(CUSTOM_FLAGS "${CUSTOM_FLAGS} -Wstrict-aliasing -fstrict-aliasing")
+if (DEBUG)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
-endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+else (DEBUG)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+endif (DEBUG)
 
 set_target_properties(mlisp          PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
 set_target_properties(mlisp-bin      PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
 set_target_properties(mlisp-profiler PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
 
-set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME libmlisp)
+if (WIN32)
+    set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME libmlisp)
+else (WIN32)
+    set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME mlisp)
+endif(WIN32)
 set_target_properties(mlisp-bin      PROPERTIES OUTPUT_NAME mlisp)

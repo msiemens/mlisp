@@ -59,11 +59,15 @@ int count_char(char* s, char c) {
             count++;
     } while (*(p++));
 
-    return count;
+    return count; 
 }
 
 char* read_input() {
     char* input = readline(">>> ");
+
+    if (input == NULL) {
+        return input;
+    }
 
     int braces_balanced = 0;
 
@@ -88,6 +92,7 @@ char* read_input() {
 
 int main(int argc, char** argv) {
     // Initialization
+    parser_init();
     lenv* env = lenv_new();
     builtins_init(env);
 
@@ -104,22 +109,23 @@ int main(int argc, char** argv) {
         }
     } else {
         // Welcome message
-        puts("MLisp Version 0.1");
+        puts("MLisp Version 0.1dev");
         puts("Enter 'quit' to exit\n");
 
         while (1) {
             char* input = read_input();
             add_history(input);
 
-            if (strstr(input, "exit") || strstr(input, "quit")) {
+            if (input == NULL || strstr(input, "exit") || strstr(input, "quit")) {
                 puts("Bye!");
-                xfree(input);
+                if (input != NULL) {
+                    xfree(input);
+                }
                 break;
             }
 
             lval* result = NULL;
-            mpc_err_t* parser_error;
-            memset(&parser_error, 0, sizeof(parser_error));
+            mpc_err_t* parser_error = NULL;
 
             if (parse("<stdin>", input, env, &result, &parser_error)) {
                 if (!(result->type == LVAL_SEXPR && result->count == 0)) {

@@ -36,7 +36,6 @@ ffi.cdef(defs)
 lib = ffi.dlopen(dll_file)
 
 # Initialize environment
-parser = None
 env = None
 
 
@@ -99,8 +98,7 @@ class lval(object):
 # Initialization
 
 def init():
-    global parser
-    parser = lib.parser_get()
+    lib.parser_init()
     init_env()
 
 
@@ -119,13 +117,11 @@ def reset_env():
 
 @contextmanager
 def run(line):
-    # Cannot use ffi.addressof, therefore create the indirection and
-    # dereference later
     result = ffi.new('lval * *')
     parser_error = ffi.new('mpc_err_t * *')
 
     if lib.parse('<python>', line, env, result, parser_error):
-        yield lval(result[0])  # <-- dereference of p_result
+        yield lval(result[0])
     else:
         try:
             raise ParserError(ffi.string(lib.mpc_err_string(parser_error[0])))

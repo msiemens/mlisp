@@ -28,6 +28,7 @@
 /// Prevent compiler from complaining about unused arguments
 #define UNUSED(x) (void)(x)
 
+
 // ------------------------------------------------------------------------------
 // Assertions with custom messages
 
@@ -43,7 +44,7 @@
     fprintf(stderr, "[ERROR] (%s:%d): " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
 })
 
-#if defined(DEBUG)
+#if defined DEBUG
     /**
      * Assert with custom message.
      *
@@ -61,7 +62,7 @@
 
     /**
      * Make assertions about a function argument.
-     * 
+     *
      * Make an assertion about a function argument. If it fails, print
      * a helpful error message to `stderr`.
      *
@@ -74,7 +75,7 @@
      * \param ...   Additional `printf`-like arguments.
      */
     #define ASSERT_ARG(name, test, msg, ...) __extension__({\
-        ASSERTF(test, "'%s':%s " msg, __PRETTY_FUNCTION__, #name, __VA_ARGS__)\
+        ASSERTF(test, "'%s':%s " msg, __PRETTY_FUNCTION__, #name, __VA_ARGS__);\
     })
 
     /**
@@ -87,7 +88,7 @@
     #define ASSERT_LIST_LIKE(name)\
         ASSERT_ARG(name, is_list_like(name),\
                    "is of type %s which is not list-like a container",\
-                   lval_str_type(name->type))
+                   lval_str_type(name->type));
 
     /**
      * Assert that an argument is not the NULL pointer.
@@ -127,7 +128,7 @@ char* strdup(const char * s);
  *
  * \param fmt	The format string.
  * \param ...   `printf`-like arguments.
- * 
+ *
  * \returns A string.
  */
  char* xsprintf(const char* fmt, ...);
@@ -162,7 +163,7 @@ void xfree(void* ptr);
  * the program dies with an error message.
  *
  * \param n	    The size of the memory to allocate.
- * 
+ *
  * \returns A pointer to the allocated memory.
  */
  void* xmalloc(size_t n);
@@ -175,7 +176,7 @@ void xfree(void* ptr);
  *
  * \param ptr	The pointer to reallocate.
  * \param n	    The new size of the memory block.
- * 
+ *
  * \returns A pointer to the reallocated memory.
  */
  void* xrealloc(void* ptr, size_t n);
@@ -185,4 +186,4 @@ void xfree(void* ptr);
  *
  * \param msg	The message to display before aborting.
  */
- void die(char* msg);
+void die(char* msg);

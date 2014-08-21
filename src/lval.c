@@ -335,9 +335,9 @@ char* lval_str_func(lenv* env, lval* func) {
     } else {
         char* str_formals = lval_repr(env, func->formals);
         char* str_body    = lval_repr(env, func->body);
-        
+
         char* buffer = xsprintf("(lambda %s %s)", str_formals, str_body);
-        
+
         xfree(str_formals);
         xfree(str_body);
 
@@ -404,8 +404,8 @@ void lval_println(lenv* env, lval* node) {
 
 #if defined DEBUG
     void lval_print_stats(void) {
-        printf("Number of allocated objects:   %d\n", allocated_count);
-        printf("Number of deallocated objects: %d\n", deallocated_count);
-        printf("Number of alive objects:       %d\n", allocated_count - deallocated_count);
+        printf("Number of allocated objects:   %ld\n", allocated_count);
+        printf("Number of deallocated objects: %ld\n", deallocated_count);
+        printf("Number of alive objects:       %ld\n", allocated_count - deallocated_count);
     }
 #endif

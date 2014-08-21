@@ -10,8 +10,11 @@ lenv* lenv_new(void) {
 }
 
 void lenv_del(lenv* env) {
-    hash_each_val(env->values, {
+    hash_each(env->values, {
+        // Delete the value
         lval_del(val);
+        // Free memory allocated in lenv_put by calling strdup
+        xfree((char*) key);
     });
     hash_free(env->values);
 
@@ -47,8 +50,28 @@ lval* lenv_get(lenv* env, lval* name) {
 }
 
 void lenv_put(lenv* env, lval* name, lval* value) {
-    hash_set(env->values, strdup(name->sym), lval_copy(value));
-    ASSERTF(hash_has(env->values, name->sym), "insert failed");
+    // Keep in mind: The hash table stores a pointer to the key and
+    // a pointer to the value.
+    char* key;
+    if (!hash_has(env->values, name->sym)) {
+        // The hash table needs a pointer to the key. We can't just
+        // use 'name->sym' because 'name' will propably be deleted
+        // soon so we store a copy of it instead.
+        key = strdup(name->sym);
+    } else {
+        // The key already exists. In this case we don't need to copy
+        // the key because the stored on will remain untouched by 'hash_set'.
+        key = name->sym;
+
+        // If the key already exists, we have to remove the old value
+        // manually because otherwise we loose the pointer to it and
+        // we have a memory leak.
+        lval* old_value = hash_get(env->values, key);
+        lval_del(old_value);
+    }
+
+    hash_set(env->values, key, lval_copy(value));
+    ASSERTF(hash_has(env->values, key), "insert failed");
 }
 
 void lenv_def(lenv* env, lval* name, lval* value) {
@@ -64,7 +87,7 @@ char* lenv_func_name(lenv* env, lbuiltin func) {
     hash_each(env->values, {
         lval* value = val;
         if (value->type == LVAL_FUNC && value->builtin == func) {
-            return strdup(key);
+            return (char*) key;
         }
     });
 

@@ -2,7 +2,6 @@
 #include "parser.h"
 
 
-static int grammar_initialized = 0;
 mpc_parser_t* number;
 mpc_parser_t* symbol;
 mpc_parser_t* string;
@@ -13,19 +12,15 @@ mpc_parser_t* expr;
 mpc_parser_t* lispy;
 
 
-mpc_parser_t* parser_get() {
-    if (grammar_initialized) {
-        return lispy;
-    }
-
-    number   = mpc_new("number");
-    symbol   = mpc_new("symbol");
-    string   = mpc_new("string");
-    comment  = mpc_new("comment");
-    sexpr    = mpc_new("sexpr");
-    qexpr    = mpc_new("qexpr");
-    expr     = mpc_new("expr");
-    lispy    = mpc_new("lispy");
+void parser_init(void) {
+    number = mpc_new("number");
+    symbol = mpc_new("symbol");
+    string = mpc_new("string");
+    comment = mpc_new("comment");
+    sexpr = mpc_new("sexpr");
+    qexpr = mpc_new("qexpr");
+    expr = mpc_new("expr");
+    lispy = mpc_new("lispy");
 
     // Define them with the following Language
     mpc_err_t* err = mpca_lang(MPCA_LANG_DEFAULT, /*__GRAMMAR__*/,
@@ -36,12 +31,13 @@ mpc_parser_t* parser_get() {
         mpc_err_delete(err);
         exit(1);
     }
+}
 
-    grammar_initialized = 1;
+mpc_parser_t* parser_get(void) {
     return lispy;
 }
 
-void parser_cleanup() {
+void parser_cleanup(void) {
     mpc_cleanup(7, number, symbol, string, comment,  sexpr, qexpr, expr, lispy);
 }
 
@@ -56,14 +52,14 @@ lval* parse_tree(mpc_ast_t* tree) {
         return parse_str(tree->contents);
     }
 
-    lval* expr = NULL;
+    lval* node = NULL;
     // If root (">") or sexpr or qexpr, create empty list
     if (strcmp(tree->tag, ">") == 0) {
-        expr = lval_sexpr();
+        node = lval_sexpr();
     } else if (strstr(tree->tag, "sexpr")) {
-        expr = lval_sexpr();
+        node = lval_sexpr();
     } else if (strstr(tree->tag, "qexpr")) {
-        expr = lval_qexpr();
+        node = lval_qexpr();
     } else {
         ASSERTF(0, "Unkown tag containing elements");
     }
@@ -84,10 +80,10 @@ lval* parse_tree(mpc_ast_t* tree) {
             continue;
         }
 
-        expr = lval_add(expr, parse_tree(tree->children[i]));
+        node = lval_add(node, parse_tree(tree->children[i]));
     }
 
-    return expr;
+    return node;
 }
 
 lval* parse_num(mpc_ast_t* tree) {
@@ -118,6 +114,7 @@ bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t** pars
     mpc_result_t r;
     if (mpc_parse(filename, str, parser_get(), &r)) {
         *result = eval(env, parse_tree(r.output));
+
         mpc_ast_delete(r.output);
 
         return true;

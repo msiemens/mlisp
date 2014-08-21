@@ -6,10 +6,10 @@
 
 #define RUNS 1000
 #define WARMUP_RUNS 10
-double results[RUNS] = {0};
+static double results[RUNS] = {0};
 
-mpc_parser_t* lispy;
-lenv* env;
+static mpc_parser_t* lispy;
+static lenv* env;
 
 void _parse(char* input) {
     lval* result = NULL;

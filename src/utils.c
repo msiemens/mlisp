@@ -37,6 +37,7 @@ void xfree(void* ptr) {
 
 void* xmalloc(size_t n) {
     void* ptr = malloc(n);
+
     if (!ptr && n != 0) {
         die("[FATAL ERROR] Out of memory, malloc failed!\n");
     }

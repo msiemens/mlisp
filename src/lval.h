@@ -84,7 +84,7 @@ static const size_t LVAL_PTR_SIZE = sizeof(lval*);
 
 /**
  * Allocate memory for a new #lval object.
- * 
+ *
  * Allocate memory to contain a new #lval object. This space won't be initialized
  * and thus may contain random data. This function is guaranteed to return a
  * valid pointer.
@@ -95,7 +95,7 @@ lval* lval_new(void);
 
 /**
  * Create and initialize a lispy S-Expression.
- * 
+ *
  * \returns A pointer to the newly created object.
  */
 lval* lval_sexpr(void);
@@ -135,7 +135,7 @@ lval* lval_str(char* str);
 
 /**
  * Create and initialize a lispy error.
- * 
+ *
  * Recieves additional arguments to act `printf`-like.
  *
  * \param fmt   The error message format string. Won't be deallocated,
@@ -155,7 +155,7 @@ lval* lval_func(lbuiltin func);
 
 /**
  * Create and initialize a lambda function.
- * 
+ *
  * Defines a lambda function. It takes a q-expr containing the formal
  * arguments and a q-expr with the function body.
  *
@@ -170,9 +170,9 @@ lval* lval_lambda(lval* formals, lval* body);
 
 /**
  * Delete a #lval object.
- * 
+ *
  * Delete a #lval object. If the object holds a string, it frees it.
- * 
+ *
  * \li If it's a lambda, it first deletes the env, formals and body.
  * \li If it's a qexpr or sexpr, it first deletes all child objects.
  *
@@ -184,7 +184,7 @@ void lval_del(lval* node);
 
 /**
  * Copy a #lval object.
- * 
+ *
  * Copy a #lval object. The new object is completely independent from
  * the original one, it holds no references to any string or child object
  * of the original.
@@ -196,7 +196,7 @@ lval* lval_copy(lval* node);
 
 /**
  * Check for equality of two objects's values.
- * 
+ *
  * Compare two object's values. If the two objects have different types,
  * the comparison always is false. Otherwise, the values are compared.
  *
@@ -310,7 +310,7 @@ char* lval_str_expr(lenv* env, lval* node, char open, char close);
  * If it's a lambda function, the function returns it's definition.
  *
  * \todo If lambda: Replace formals that are set with their values.
- * 
+ *
  * \param env   The environment from where the print is called.
  * \param func  The function object to stringify.
  *

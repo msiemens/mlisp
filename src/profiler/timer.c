@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "timer.h"
 
 timer_inst* timer_init(void) {
