@@ -1,7 +1,6 @@
+#include "lenv.h"
 #include "builtin.h"
 
-lval* builtin_def(lenv* env, lval* node) { return builtin_var(env, node, DEF_GLOBAL); }
-lval* builtin_put(lenv* env, lval* node) { return builtin_var(env, node, DEF_LOCAL); }
 
 lval* builtin_var(lenv* env, lval* node, def_scope type) {
     LASSERT_ARG_TYPE((type == DEF_GLOBAL) ? "def" : "=", node, 0, LVAL_QEXPR);
@@ -34,6 +33,9 @@ lval* builtin_var(lenv* env, lval* node, def_scope type) {
     lval_del(node);
     return lval_sexpr();
 }
+
+lval* builtin_def(lenv* env, lval* node) { return builtin_var(env, node, DEF_GLOBAL); }
+lval* builtin_put(lenv* env, lval* node) { return builtin_var(env, node, DEF_LOCAL); }
 
 lval* builtin_lambda(lenv* env, lval* node) {
     UNUSED(env);

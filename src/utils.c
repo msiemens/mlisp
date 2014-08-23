@@ -46,6 +46,11 @@ char* xsprintf(const char* fmt, ...) {
 
 void xfree(void* ptr) {
     ASSERTF(ptr != NULL, "attempt to free a NULL ptr!");
+
+#if defined DEBUG
+    memset(ptr, 0xEE, sizeof(ptr));
+#endif
+
     free(ptr);
 }
 
@@ -55,6 +60,11 @@ void* xmalloc(size_t n) {
     if (!ptr && n != 0) {
         die("[FATAL ERROR] Out of memory, malloc failed!\n");
     }
+
+#if defined DEBUG
+    memset(ptr, 0xDE, n);
+#endif
+
 
     return ptr;
 }

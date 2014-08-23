@@ -5,17 +5,11 @@
 #pragma once
 
 #if defined MLISP_NOINCLUDE
-    typedef struct {
-        uint32_t n_buckets, size, n_occupied, upper_bound;
-        uint32_t* flags;
-        const char* *keys;
-        void* *vals;
-    } hash_t;
+    typedef struct hash_t hash_t;
 #else
     #include "hash.h"
 #endif
 
-#include "utils.h"
 #include "lval.h"
 
 

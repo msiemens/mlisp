@@ -12,7 +12,6 @@
 #include <stdbool.h>
 
 #include "lval.h"
-#include "eval.h"
 
 /**
  * Initialize the parser.
@@ -38,7 +37,3 @@ void parser_cleanup(void);
 bool parse(char* filename, char* str, lenv* env, lval** result, mpc_err_t** parser_error);
 
 lval* parse_tree(mpc_ast_t* tree);
-
-lval* parse_num(mpc_ast_t* tree);
-
-lval* parse_str(char* contents);

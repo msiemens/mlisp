@@ -11,7 +11,6 @@
 #endif
 
 #include "config.h"
-#include "utils.h"
 
 
 // Forward declarations
@@ -287,48 +286,6 @@ lval* lval_take(lval* container, size_t index);
  * Return the string representation of a lval type.
  */
 char* lval_str_type(lval_type type);
-
-/**
- * Return the string representation of a Q-Expr/S-Expr.
- *
- * Build and return the string representation of a Q-Expr/S-Expr.
- *
- * \param env   The environment from where the print is called.
- * \param node  The expression object to stringify.
- * \param open  The opening character: `(` or `{`.
- * \param close The closing character: `)` or `}`.
- *
- * \returns A char pointer containing the string. Has to be cleaned up!
- */
-char* lval_str_expr(lenv* env, lval* node, char open, char close);
-
-/**
- * Return the string representation of a function.
- *
- * Build and return the string representation of a function. If it's a builtin
- * function, the function returns `<function name>`.
- * If it's a lambda function, the function returns it's definition.
- *
- * \todo If lambda: Replace formals that are set with their values.
- *
- * \param env   The environment from where the print is called.
- * \param func  The function object to stringify.
- *
- * \returns A char pointer containing the string. Has to be cleaned up!
- */
-char* lval_str_func(lenv* env, lval* func);
-
-/**
- * Return the string representation of a string.
- *
- * Build and return the string representation of a string object.
- *
- * \param env   The environment from where the print is called.
- * \param node  The string object to stringify.
- *
- * \returns A char pointer containing the string. Has to be cleaned up!
- */
-char* lval_str_str(lenv* env, lval* node);
 
 /**
  * Convert a value to a string.

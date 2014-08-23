@@ -13,6 +13,8 @@
 #include <string.h>
 #endif
 
+#include "config.h"
+
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -20,11 +22,6 @@
 /// Tell GNU-compilers to allow non-ANSI extensions. Otherwise: no effect.
 #if !defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
 #define __extension__(arg) arg
-#endif
-
-#if ! defined NDEBUG
-/// DEBUG flag
-#define DEBUG 1
 #endif
 
 /// Prevent compiler from complaining about unused arguments
@@ -162,7 +159,7 @@ char* strappend(char* dest, char* src, size_t size);
  *
  * \returns A string.
  */
- char* xsprintf(const char* fmt, ...);
+    char* xsprintf(const char* fmt, ...);
 
 /**
  * Free a pointer safely
@@ -172,7 +169,7 @@ char* strappend(char* dest, char* src, size_t size);
  *
  * \param ptr	A pointer to the pointer to free.
  */
-void xfree(void** ptr);
+void xfree(void* ptr);
 
 /**
  * Allocate memory safely.

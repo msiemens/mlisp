@@ -1,3 +1,6 @@
+#include "lval.h"
+#include "parser.h"
+#include "eval.h"
 #include "builtin.h"
 
 lval* builtin_load(lenv* env, lval* node) {
@@ -7,6 +10,7 @@ lval* builtin_load(lenv* env, lval* node) {
     mpc_result_t r;
     char* filename = node->values[0]->str;
 
+    // TODO: Move to parse.c
     if (mpc_parse_contents(filename, parser_get(), &r)) {
         // Read contents
         lval* expr = parse_tree(r.output);
@@ -48,7 +52,7 @@ lval* builtin_load(lenv* env, lval* node) {
 lval* builtin_display(lenv* env, lval* node, bool newline) {
     for_item(node, {
         char* str = lval_to_str(env, item);
-        printf(str);
+        printf("%s", str);
         xfree(str);
 
         if (i != node->count - 1) {

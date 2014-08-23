@@ -1,14 +1,61 @@
 #include <stdio.h>
 
+#include "utils.h"
 #include "lval.h"
-
-/// Wether a node is a list-like object.
-#define is_list_like(node) (node->type == LVAL_SEXPR || node->type == LVAL_QEXPR)
 
 #if defined DEBUG
     static long allocated_count = 0;
     static long deallocated_count = 0;
 #endif
+
+
+/// Wether a node is a list-like object.
+bool is_list_like(lval* node) {
+    return node->type == LVAL_SEXPR || node->type == LVAL_QEXPR;
+}
+
+
+/**
+ * Return the string representation of a Q-Expr/S-Expr.
+ *
+ * Build and return the string representation of a Q-Expr/S-Expr.
+ *
+ * \param env   The environment from where the print is called.
+ * \param node  The expression object to stringify.
+ * \param open  The opening character: `(` or `{`.
+ * \param close The closing character: `)` or `}`.
+ *
+ * \returns A char pointer containing the string. Has to be cleaned up!
+ */
+char* lval_str_expr(lenv* env, lval* node, char open, char close);
+
+/**
+ * Return the string representation of a function.
+ *
+ * Build and return the string representation of a function. If it's a builtin
+ * function, the function returns `<function name>`.
+ * If it's a lambda function, the function returns it's definition.
+ *
+ * \todo If lambda: Replace formals that are set with their values.
+ *
+ * \param env   The environment from where the print is called.
+ * \param func  The function object to stringify.
+ *
+ * \returns A char pointer containing the string. Has to be cleaned up!
+ */
+char* lval_str_func(lenv* env, lval* func);
+
+/**
+ * Return the string representation of a string.
+ *
+ * Build and return the string representation of a string object.
+ *
+ * \param env   The environment from where the print is called.
+ * \param node  The string object to stringify.
+ *
+ * \returns A char pointer containing the string. Has to be cleaned up!
+ */
+char* lval_str_str(lenv* env, lval* node);
 
 
 lval* lval_new(void) {

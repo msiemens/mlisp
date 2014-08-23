@@ -8,9 +8,10 @@
     #include "stdbool.h"
 #endif
 
-#include "parser.h"
+#include "config.h"
+#include "utils.h"  // Needed by builtins/*.c
 #include "lval.h"
-#include "eval.h"
+#include "lenv.h"
 
 
 #pragma GCC diagnostic push
@@ -188,8 +189,6 @@ lval* builtin_div(lenv* env, lval* node);
 
 lval* builtin_mod(lenv* env, lval* node);
 
-lval* builtin_op(lenv* env, lval* node, char op);
-
 
 lval* builtin_gt(lenv* env, lval* node);
 
@@ -199,13 +198,9 @@ lval* builtin_lt(lenv* env, lval* node);
 
 lval* builtin_le(lenv* env, lval* node);
 
-lval* builtin_ord(lenv* env, lval* node, char* op);
-
 lval* builtin_eq(lenv* env, lval* node);
 
 lval* builtin_ne(lenv* env, lval* node);
-
-lval* builtin_cmp(lenv* env, lval* node, char* op);
 
 lval* builtin_and(lenv* env, lval* node);
 
@@ -230,8 +225,6 @@ lval* builtin_cons(lenv* env, lval* node);
 lval* builtin_def(lenv* env, lval* node);
 
 lval* builtin_put(lenv* env, lval* node);
-
-lval* builtin_var(lenv* env, lval* node, def_scope type);
 
 lval* builtin_lambda(lenv* env, lval* node);
 

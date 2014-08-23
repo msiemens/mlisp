@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "parser.h"
+#include "eval.h"
 
 
 mpc_parser_t* number;
@@ -10,6 +11,12 @@ mpc_parser_t* sexpr;
 mpc_parser_t* qexpr;
 mpc_parser_t* expr;
 mpc_parser_t* lispy;
+
+
+// TODO: Docs
+lval* parse_num(mpc_ast_t* tree);
+
+lval* parse_str(char* contents);
 
 
 void parser_init(void) {

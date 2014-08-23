@@ -1,3 +1,4 @@
+#include "parser.h"
 #include "builtin.h"
 
 void builtins_init(lenv* env) {

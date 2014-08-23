@@ -1,5 +1,7 @@
 #include "builtin.h"
 
+lval* builtin_op(lenv* env, lval* node, char op);
+
 lval* builtin_add(lenv* env, lval* node) { return builtin_op(env, node, '+'); }
 lval* builtin_sub(lenv* env, lval* node) { return builtin_op(env, node, '-'); }
 lval* builtin_mul(lenv* env, lval* node) { return builtin_op(env, node, '*'); }

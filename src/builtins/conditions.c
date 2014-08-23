@@ -1,9 +1,6 @@
+#include "eval.h"
 #include "builtin.h"
 
-lval* builtin_gt(lenv* env, lval* node) { return builtin_ord(env, node, ">");  }
-lval* builtin_ge(lenv* env, lval* node) { return builtin_ord(env, node, ">="); }
-lval* builtin_lt(lenv* env, lval* node) { return builtin_ord(env, node, "<");  }
-lval* builtin_le(lenv* env, lval* node) { return builtin_ord(env, node, "<="); }
 
 lval* builtin_ord(lenv* env, lval* node, char* op) {
     UNUSED(env);
@@ -38,8 +35,10 @@ lval* builtin_ord(lenv* env, lval* node, char* op) {
     return x;
 }
 
-lval* builtin_eq(lenv* env, lval* node) { return builtin_cmp(env, node, "=="); }
-lval* builtin_ne(lenv* env, lval* node) { return builtin_cmp(env, node, "!="); }
+lval* builtin_gt(lenv* env, lval* node) { return builtin_ord(env, node, ">");  }
+lval* builtin_ge(lenv* env, lval* node) { return builtin_ord(env, node, ">="); }
+lval* builtin_lt(lenv* env, lval* node) { return builtin_ord(env, node, "<");  }
+lval* builtin_le(lenv* env, lval* node) { return builtin_ord(env, node, "<="); }
 
 lval* builtin_cmp(lenv* env, lval* node, char* op) {
     UNUSED(env);
@@ -58,6 +57,9 @@ lval* builtin_cmp(lenv* env, lval* node, char* op) {
     lval_del(node);
     return lval_num(result);
 }
+
+lval* builtin_eq(lenv* env, lval* node) { return builtin_cmp(env, node, "=="); }
+lval* builtin_ne(lenv* env, lval* node) { return builtin_cmp(env, node, "!="); }
 
 lval* builtin_and(lenv* env, lval* node) {
     UNUSED(env);
