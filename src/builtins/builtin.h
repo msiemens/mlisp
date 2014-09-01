@@ -57,8 +57,8 @@
     }
 
 /**
-* Assert that at most `ecount` arguments has been passed.
-*/
+ * Assert that at most `ecount` arguments has been passed.
+ */
 #define LASSERT_MAX_ARG_COUNT(name, node, ecount) \
     if (node->count > ecount) { \
         LERROR(node, "Function '%s' passed too many arguments. Expected at most %i, got %i.", \
@@ -66,16 +66,16 @@
     }
 
 /**
-* Assert that the `i`-th argument has the type `etype`.
-*/
+ * Assert that the `i`-th argument has the type `etype`.
+ */
 #define LASSERT_ARG_TYPE(name, node, i, etype) \
     LASSERT(node, node->values[i]->type == etype, \
             "Function '%s' passed incorrect argument types. Expected %s, got %s.", \
             name, lval_str_type(etype), lval_str_type(node->values[i]->type));
 
 /**
-* Assert that the `i`-th argument is not an empty list.
-*/
+ * Assert that the `i`-th argument is not an empty list.
+ */
 #define LASSERT_ARG_NOT_EMPTY_LIST(name, node, i) \
     LASSERT(node, node->values[i]->count > 0, \
             "Function '%s' passed empty list.", name);
@@ -168,67 +168,233 @@ lval* builtin_error(lenv* env, lval* node);
  */
 lval* builtin_eval(lenv* env, lval* node);
 
-// -------------------- DOC MARKER --------------------
 
 /**
-* SHORT_DESCR
-*
-* \param env   The environment where to run this function.
-* \param node  The arguments.
-*
-* \returns RETURN_VALUE
-*/
+ * Add two numbers.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  A list of numbers.
+ *
+ * \returns The sum.
+ */
 lval* builtin_add(lenv* env, lval* node);
 
-
+/**
+ * Subtract two numbers.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  A list of numbers.
+ *
+ * \returns The difference.
+ */
 lval* builtin_sub(lenv* env, lval* node);
 
+/**
+ * Multiply two numbers.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  A list of numbers.
+ *
+ * \returns The product.
+ */
 lval* builtin_mul(lenv* env, lval* node);
 
+/**
+ * Divide two numbers.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  A list of numbers.
+ *
+ * \returns The quotient.
+ */
 lval* builtin_div(lenv* env, lval* node);
 
+/**
+ * Calculate the modulo of two numbers (a % b).
+ *
+ * \param env   The environment where to run this function.
+ * \param node  A list of numbers.
+ *
+ * \returns The remainder of the division.
+ */
 lval* builtin_mod(lenv* env, lval* node);
 
 
+// -------------------- DOC MARKER --------------------
+/**
+ * a > b > c ...
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_gt(lenv* env, lval* node);
 
+/**
+ * a >= b => c ...
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_ge(lenv* env, lval* node);
 
+/**
+ * a < b < c ...
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_lt(lenv* env, lval* node);
 
+/**
+ * a <= b <= c ...
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_le(lenv* env, lval* node);
 
+/**
+ * a == b
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_eq(lenv* env, lval* node);
 
+ /**
+ * a != b
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_ne(lenv* env, lval* node);
 
+/**
+ * a && b (boolean)
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_and(lenv* env, lval* node);
 
+/**
+ * a || b (boolean)
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_or(lenv* env, lval* node);
 
+/**
+ * !a
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ */
 lval* builtin_not(lenv* env, lval* node);
 
+/**
+ * Select a branch based on a condition.
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The condition (number), the true-branch (Q-Expr) and
+ *              the else-branch (Q-Expr).
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_if(lenv* env, lval* node);
 
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_head(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_tail(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_list(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_join(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_cons(lenv* env, lval* node);
 
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_def(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_put(lenv* env, lval* node);
 
+/**
+ * SHORT_DESCR
+ *
+ * \param env   The environment where to run this function.
+ * \param node  The arguments.
+ *
+ * \returns RETURN_VALUE
+ */
 lval* builtin_lambda(lenv* env, lval* node);
 
 
 #if defined DEBUG
+    /**
+     * SHORT_DESCR
+     *
+     * \param env   The environment where to run this function.
+     * \param node  The arguments.
+     *
+     * \returns RETURN_VALUE
+     */
     lval* builtin_debug_stats(lenv* env, lval* node);
 #endif

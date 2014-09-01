@@ -190,6 +190,9 @@ void lval_del(lval* node) {
             ASSERTF(0, "Invalid lval type: %i", node->type);
     }
 
+#if defined DEBUG
+    memset(node, 0xEE, LVAL_SIZE);
+#endif
     xfree(node);
 }
 

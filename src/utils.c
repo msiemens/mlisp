@@ -46,11 +46,6 @@ char* xsprintf(const char* fmt, ...) {
 
 void xfree(void* ptr) {
     ASSERTF(ptr != NULL, "attempt to free a NULL ptr!");
-
-#if defined DEBUG
-    memset(ptr, 0xEE, sizeof(ptr));
-#endif
-
     free(ptr);
 }
 
