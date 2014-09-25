@@ -1,3 +1,4 @@
+#include <lval.h>
 #include "builtin.h"
 
 lval* builtin_head(lenv* env, lval* node) {

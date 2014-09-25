@@ -9,7 +9,7 @@ GEN_DIR = path.join(BASE_PATH, 'gen/')
 if not path.exists(GEN_DIR):
     os.mkdir(GEN_DIR)
 
-COMMENT = '/*__GRAMMAR__*/'
+COMMENT = '"" /*__GRAMMAR__*/'
 COMMENT_ESCAPED = re.escape(COMMENT)
 
 GRAMMAR_DEFINITION = path.join(SRC_DIR, 'grammar.ebnf')

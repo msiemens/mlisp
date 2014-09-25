@@ -124,5 +124,7 @@ int main(int argc, char** argv) {
     printf("Avg: %fms\n", average);
     printf("StdDev: %fms\n", stddev);
 
-    if (profile) timer_free(timer);
+    timer_free(timer);
+
+    return 0;
 }

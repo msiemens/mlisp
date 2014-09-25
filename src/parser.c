@@ -30,7 +30,7 @@ void parser_init(void) {
     lispy = mpc_new("lispy");
 
     // Define them with the following Language
-    mpc_err_t* err = mpca_lang(MPCA_LANG_DEFAULT, /*__GRAMMAR__*/,
+    mpc_err_t* err = mpca_lang(MPCA_LANG_DEFAULT, "" /*__GRAMMAR__*/,
                                number, symbol, string, comment, sexpr, qexpr, expr, lispy);
 
     if (err != NULL) {

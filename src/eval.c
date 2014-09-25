@@ -1,7 +1,3 @@
-#include <stdbool.h>
-#include <math.h>
-
-#include "config.h"
 #include "utils.h"
 #include "lenv.h"
 #include "eval.h"

@@ -7,7 +7,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
-void add_history(char* unused) {}
+void add_history(char* unused) {UNUSED(unused);}
 
 char* readline(char* prompt) {
     // Print prompt
@@ -20,7 +20,7 @@ char* readline(char* prompt) {
     char* input = xmalloc(len_max);
     current_size = len_max;
 
-    int c = EOF;
+    int c;
     unsigned int i = 0;
 
     while ((c = getchar()) != '\n' && c != EOF) {
@@ -148,5 +148,7 @@ int main(int argc, char** argv) {
 
     // Undefine and delete our parsers
     parser_cleanup();
+
+    return 0;
 }
 

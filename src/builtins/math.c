@@ -1,3 +1,4 @@
+#include <lval.h>
 #include "builtin.h"
 
 lval* builtin_op(lenv* env, lval* node, char op);
