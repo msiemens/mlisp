@@ -26,7 +26,7 @@ if not os.path.exists(dll_file):
 
 # Prepare header file
 defs = subprocess.Popen([
-    'cc', '-E', '-P', '-DMLISP_NOINCLUDE', '-I' + src, header],
+    'gcc', '-E', '-P', '-DMLISP_NOINCLUDE', '-I' + src, header],
     stdout=subprocess.PIPE).communicate()[0]
 defs = defs.replace('\r\n', '\n');
 defs = re.sub('#pragma .*', '', defs)

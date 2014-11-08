@@ -92,7 +92,7 @@ set_target_properties(mlisp-bin      PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
 set_target_properties(mlisp-profiler PROPERTIES COMPILE_FLAGS ${CUSTOM_FLAGS})
 
 if (WIN32)
-    set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME libmlisp)
+    set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME mlisp)
 else (WIN32)
     set_target_properties(libmlisp       PROPERTIES OUTPUT_NAME mlisp)
 endif(WIN32)
